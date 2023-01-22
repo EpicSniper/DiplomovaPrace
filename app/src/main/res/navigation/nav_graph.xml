@@ -22,7 +22,18 @@
         tools:layout="@layout/fragment_second">
 
         <action
-            android:id="@+id/action_SecondFragment_to_FirstFragment"
+            android:id="@+id/action_SecondFragment_to_ChartFragment"
+            app:destination="@id/PianoRollFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/PianoRollFragment"
+        android:name="cz.uhk.diplomovaprace.PianoRollFragment"
+        android:label="@string/chart_fragment_label"
+        tools:layout="@layout/fragment_piano_roll">
+
+        <action
+            android:id="@+id/action_SecondFragment_to_PianoRollFragment"
             app:destination="@id/FirstFragment" />
     </fragment>
 </navigation>
