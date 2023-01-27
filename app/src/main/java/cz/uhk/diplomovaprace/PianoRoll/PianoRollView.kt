@@ -1,71 +1,47 @@
 package cz.uhk.diplomovaprace.PianoRoll
 
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
+import android.graphics.*
 import android.util.AttributeSet
-import android.view.MotionEvent
-import android.view.SurfaceHolder
-import android.view.SurfaceView
-import android.view.View
-import android.view.View.OnTouchListener
+import android.view.*
+import android.view.GestureDetector.OnGestureListener
 
 class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(context, attrs),
-    SurfaceHolder.Callback, OnTouchListener {
+    SurfaceHolder.Callback, OnGestureListener, ScaleGestureDetector.OnScaleGestureListener {
 
     private val paint = Paint()
-    private var notes: List<Note> = emptyList()
-    private var gridNeedsRedraw = true
-    private var mLastTouchY: Float = 0f
-    private var mIsScrolling = false
-    private var mVerticalOffset = 0f
+    private var notes = ArrayList<Note>()
+
+    private val gestureDetector = GestureDetector(context, this)
+    private val scaleGestureDetector = ScaleGestureDetector(context, this)
+
+    private var scrollX = 0f
+    private var scrollY = 0f
+    private var scaleOfX = 0f
+    private var scaleOfY = 0f
+    private var scaleFactor = 1f
 
     init {
         paint.color = Color.YELLOW
         paint.style = Paint.Style.FILL
-        gridNeedsRedraw = true
         holder.addCallback(this)
-        setOnTouchListener(this)
     }
 
-
-    override fun onTouch(view: View, event: MotionEvent?): Boolean {
-        when (event?.action) {
-            MotionEvent.ACTION_DOWN -> {
-                mLastTouchY = event.y
-                mIsScrolling = true
-                return true
-            }
-            MotionEvent.ACTION_MOVE -> {
-                if (mIsScrolling) {
-                    // Calculate the change in Y position
-                    val dy = event.y - mLastTouchY
-                    mLastTouchY = event.y
-                    // Scroll the view by the change in Y position
-                    mVerticalOffset += dy
-                    gridNeedsRedraw = true
-                    redrawAll()
-                    return true
-
-                }
-            }
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                mIsScrolling = false
-                return true
-            }
-        }
-        return false
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        gestureDetector.onTouchEvent(event)
+        scaleGestureDetector.onTouchEvent(event)
+        return true
     }
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
-        gridNeedsRedraw = true
-        redrawAll()
+
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
-        setWillNotDraw(false)
-        redrawAll()
+        val canvas = lockCanvas()
+        canvas.drawRect(200f, 200f, 500f, 500f, paint)
+        unlockCanvas(canvas)
+        //redrawAll()
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
@@ -73,31 +49,42 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     private fun redrawAll() {
-        val canvas = holder.lockCanvas()
+        val canvas = lockCanvas()
+        canvas.save()
+        canvas.scale(scaleFactor, scaleFactor, scaleOfX, scaleOfY)
+        canvas.translate(scrollX, scrollY)
         canvas.drawColor(Color.GRAY)
-        drawGrid(canvas)
-        drawNotes(canvas)
+        canvas.drawRect(200f, 200f, 500f, 500f, paint)
+        canvas.restore()
+        unlockCanvas(canvas)
+    }
+
+    private fun lockCanvas(): Canvas {
+        val canvas = holder.lockCanvas()
+        return canvas
+    }
+
+    private fun unlockCanvas(canvas: Canvas) {
         holder.unlockCanvasAndPost(canvas)
     }
 
     private fun drawGrid(canvas: Canvas) {
-        if (gridNeedsRedraw == true){
-            // Code to draw the grid lines
+        // Code to draw the grid lines
 
-            // Draw piano keys
-            val pianoKeyWidth = width / 6f  // assuming 1/6th of the view is dedicated to piano keys
-            val pianoKeyHeight = height / 12f // assuming 12 piano keys
-            val pianoKeyColor = Color.BLUE
-            paint.color = pianoKeyColor
-            for (i in 0 until 12) {
-                val top = i * pianoKeyHeight + mVerticalOffset
-                val left = 0f
-                val bottom = left + pianoKeyHeight + mVerticalOffset
-                val right = pianoKeyWidth
-                canvas.drawRect(left, top, right, bottom, paint)
-            }
-
-            gridNeedsRedraw = false
+        // Draw piano keys
+        val pianoKeyWidth = width / 8f  // assuming 1/6th of the view is dedicated to piano keys
+        val pianoKeyHeight = height / 127f // assuming 12 piano keys
+        val pianoKeyColor = Color.BLUE
+        paint.color = pianoKeyColor
+        for (i in 0 until 127) {
+            val top = i * pianoKeyHeight
+            val left = 0f
+            val bottom = top + pianoKeyHeight
+            val right = pianoKeyWidth
+            var rect = Rect(400, 400, 900, 900);
+            canvas.drawRect(left, top, right, bottom, paint)
+            paint.color = Color.RED
+            canvas.drawRect(rect, paint)
         }
     }
 
@@ -105,10 +92,74 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         // Code to draw the notes
     }
 
-    fun setData(notes: List<Note>) {
+    fun getNotes(): ArrayList<Note> {
+        return this.notes
+    }
+
+    fun setNotes(notes: ArrayList<Note>) {
         this.notes = notes
         redrawAll()
     }
 
-    data class Note(val pitch: Int, val start: Float, val duration: Float)
+    override fun onDown(event: MotionEvent): Boolean {
+        /*println("------- ON DOWN -------")
+        println("X: " + event.x + " |Y: " + event.y)*/
+        return true
+    }
+
+    override fun onShowPress(event: MotionEvent) {
+        /*println("------- ON SHOW PRESS -------")
+        println("X: " + event.x + " |Y: " + event.y)*/
+    }
+
+    override fun onSingleTapUp(event: MotionEvent): Boolean {
+        /*println("------- ON SINGLE TAP -------")
+        println("X: " + event.x + " |Y: " + event.y)*/
+        return true
+    }
+
+    override fun onScroll(event1: MotionEvent, event2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
+        /*println("------- ON SCROLL -------")
+        println("DOWN - X: " + event1.x + " |Y: " + event1.y)
+        println("DOWN - X: " + event2.x + " |Y: " + event2.y)
+        println("DISTANCE - X: " + distanceX + " |Y: " + distanceY)*/
+        scrollX -= distanceX / scaleFactor
+        scrollY -= distanceY / scaleFactor
+        redrawAll()
+
+        return true
+    }
+
+    override fun onLongPress(event: MotionEvent) {
+        /*println("------- ON LONG PRESS -------")
+        println("X: " + event.x + " |Y: " + event.y)*/
+    }
+
+    override fun onFling(eventDown: MotionEvent, eventUp: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+        /*println("------- ON FLING -------")
+        println("DOWN - X: " + eventDown.x + " |Y: " + eventDown.y)
+        println("UP - X: " + eventUp.x + " |Y: " + eventUp.y)
+        println("VELOCITY - X: " + velocityX + " |Y: " + velocityY)*/
+        return true
+    }
+
+    override fun onScale(detector: ScaleGestureDetector): Boolean {
+        /*println("OnScale")
+        println("----------"+detector.scaleFactor)
+        println("-" + detector.focusX + "+" + detector.focusY)*/
+        scaleOfX = detector.focusX
+        scaleOfY = detector.focusY
+        scaleFactor *= detector.scaleFactor
+        redrawAll()
+        return true
+    }
+
+    override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
+        println("OnScaleBegin")
+        return true
+    }
+
+    override fun onScaleEnd(detector: ScaleGestureDetector) {
+        println("OnScaleEnd")
+    }
 }
