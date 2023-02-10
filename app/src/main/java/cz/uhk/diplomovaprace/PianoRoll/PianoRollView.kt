@@ -17,8 +17,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
     private var scrollX = 0f
     private var scrollY = 0f
-    private var scaleOfX = 0f
-    private var scaleOfY = 0f
     private var scaleFactor = 1f
 
     init {
@@ -30,18 +28,16 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     override fun onTouchEvent(event: MotionEvent): Boolean {
         gestureDetector.onTouchEvent(event)
         scaleGestureDetector.onTouchEvent(event)
+        redrawAll()
         return true
     }
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
-
+        //redrawAll()
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
-        val canvas = lockCanvas()
-        canvas.drawRect(200f, 200f, 500f, 500f, paint)
-        unlockCanvas(canvas)
-        //redrawAll()
+        redrawAll()
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
@@ -49,19 +45,36 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     private fun redrawAll() {
-        val canvas = lockCanvas()
+        var canvas = lockCanvas()
         canvas.save()
-        canvas.scale(scaleFactor, scaleFactor, scaleOfX, scaleOfY)
-        canvas.translate(scrollX, scrollY)
-        canvas.drawColor(Color.GRAY)
-        canvas.drawRect(200f, 200f, 500f, 500f, paint)
+        var widthDifference = width - (width / scaleFactor)
+        if (scrollX > 0f) {
+            scrollX = 0f
+        }
+
+        var heightDifference = height - (height / scaleFactor)
+        if (scrollY > 0f) {
+            scrollY = 0f
+        }
+
+        if ((height / scaleFactor) - scrollY / scaleFactor > height) {
+            scrollY = (scaleFactor - 1) * -height
+        }
+
+        var translateX = (scrollX / scaleFactor) + widthDifference / 2f
+        var translateY = (scrollY / scaleFactor) + heightDifference / 2f
+
+        canvas.drawColor(Color.GRAY)        // TODO: set background color
+        canvas.scale(scaleFactor, scaleFactor, (width / 2f), (height / 2f))
+        canvas.translate(translateX, translateY)
+        drawPiano(canvas)
+        canvas.drawRect(400f, 400f, 800f, 800f, paint)
         canvas.restore()
         unlockCanvas(canvas)
     }
 
     private fun lockCanvas(): Canvas {
-        val canvas = holder.lockCanvas()
-        return canvas
+        return holder.lockCanvas()
     }
 
     private fun unlockCanvas(canvas: Canvas) {
@@ -71,20 +84,31 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private fun drawGrid(canvas: Canvas) {
         // Code to draw the grid lines
 
+
+    }
+
+    private fun drawPiano(canvas: Canvas) {
         // Draw piano keys
-        val pianoKeyWidth = width / 8f  // assuming 1/6th of the view is dedicated to piano keys
+        val pianoKeyWidth = width / 16f
         val pianoKeyHeight = height / 127f // assuming 12 piano keys
+
         val pianoKeyColor = Color.BLUE
         paint.color = pianoKeyColor
+
+        var counter = 0
+        var widthDifference = width - width / scaleFactor
+        val left = (-scrollX / scaleFactor)
+        val right = pianoKeyWidth + left
         for (i in 0 until 127) {
             val top = i * pianoKeyHeight
-            val left = 0f
             val bottom = top + pianoKeyHeight
-            val right = pianoKeyWidth
-            var rect = Rect(400, 400, 900, 900);
+            if (counter == 126) {
+                paint.color = Color.BLUE
+            }
+
             canvas.drawRect(left, top, right, bottom, paint)
             paint.color = Color.RED
-            canvas.drawRect(rect, paint)
+            counter++
         }
     }
 
@@ -123,9 +147,17 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         println("DOWN - X: " + event1.x + " |Y: " + event1.y)
         println("DOWN - X: " + event2.x + " |Y: " + event2.y)
         println("DISTANCE - X: " + distanceX + " |Y: " + distanceY)*/
-        scrollX -= distanceX / scaleFactor
-        scrollY -= distanceY / scaleFactor
-        redrawAll()
+        scrollX -= distanceX
+        scrollY -= distanceY
+
+        var widthDifference = width - width / scaleFactor
+        if (scrollX - widthDifference > 0f) {
+            scrollX = 0f + widthDifference
+        }
+
+        var heightDifference = height - height / scaleFactor
+
+
 
         return true
     }
@@ -146,20 +178,20 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     override fun onScale(detector: ScaleGestureDetector): Boolean {
         /*println("OnScale")
         println("----------"+detector.scaleFactor)
-        println("-" + detector.focusX + "+" + detector.focusY)*/
-        scaleOfX = detector.focusX
-        scaleOfY = detector.focusY
+        println("-" + detector.currentSpanX + "+" + detector.currentSpanY)*/
         scaleFactor *= detector.scaleFactor
-        redrawAll()
+        if (scaleFactor < 1f) {
+            scaleFactor = 1f
+        }
+
         return true
     }
 
     override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
-        println("OnScaleBegin")
         return true
     }
 
     override fun onScaleEnd(detector: ScaleGestureDetector) {
-        println("OnScaleEnd")
+        //println("OnScaleEnd")
     }
 }
