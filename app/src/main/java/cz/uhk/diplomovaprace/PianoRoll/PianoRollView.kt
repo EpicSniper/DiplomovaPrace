@@ -2,9 +2,11 @@ package cz.uhk.diplomovaprace.PianoRoll
 
 import android.content.Context
 import android.graphics.*
+import android.graphics.Canvas.VertexMode
 import android.util.AttributeSet
 import android.view.*
 import android.view.GestureDetector.OnGestureListener
+import androidx.annotation.ColorInt
 import kotlin.math.sqrt
 
 class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(context, attrs),
@@ -18,8 +20,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
     private var scrollX = 0f
     private var scrollY = 0f
-    private var focusX = 0f
-    private var focusY = 0f
     private var scaleFactorX = 1f
     private var scaleFactorY = 1f
     private var scaling = false
@@ -27,10 +27,13 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private var heightDifference = 0f
     private var centerX = 0f
     private var centerY = 0f
+    private var pianoKeyWidth = width / 16f
+    private var pianoKeyHeight = height / 127f
 
     init {
         paint.color = Color.YELLOW
         paint.style = Paint.Style.FILL
+        holder.addCallback(this)
         holder.addCallback(this)
     }
 
@@ -38,14 +41,32 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         gestureDetector.onTouchEvent(event)
         scaleGestureDetector.onTouchEvent(event)
         redrawAll()
+
         return true
     }
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
-        //redrawAll()
+        redrawAll()
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
+        // Inicialiazce promennych
+        // Promenne pro prvotni zobrazeni
+        scrollX = 0f
+        scrollY = 0f
+        scaleFactorX = 1f
+        scaleFactorY = 1f
+
+        // Ostatni promenne
+        scaling = false
+        widthDifference = width - (width / scaleFactorX)
+        heightDifference = height - (height / scaleFactorY)
+        centerX = scrollX + width / 2f
+        centerY = scrollY + height / 2f
+        pianoKeyWidth = width / 16f         // TODO: fixovana sirka
+        pianoKeyHeight = height / 127f
+
+        debugAddNotes()
         redrawAll()
     }
 
@@ -58,23 +79,22 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         canvas.save()
         checkBorders()
 
-        // Mozna ze jeste nekdy vyuziju
-        // var translateX = (scrollX / scaleFactorX) + widthDifference / 2f
-        // var translateY = (scrollY / scaleFactorY) + heightDifference / 2f
-
         widthDifference = width - (width / scaleFactorX)
         heightDifference = height - (height / scaleFactorY)
         centerX = scrollX + width / 2f
         centerY = scrollY + height / 2f
-
+        pianoKeyWidth = width / 7f / scaleFactorX       // TODO: sirka klaves pres nastaveni
 
         canvas.drawColor(Color.GRAY)        // TODO: set background color
 
         canvas.translate(-scrollX, -scrollY)
         canvas.scale(scaleFactorX, scaleFactorY, centerX, centerY)
 
+        drawGrid(canvas)
+
+        drawNotes(canvas)
         drawPiano(canvas)
-        drawDebugLines(canvas)
+        //drawDebugLines(canvas)
 
         canvas.restore()
         unlockCanvas(canvas)
@@ -92,8 +112,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         if (scaleFactorX < 1f) {
             scaleFactorX = 1f
         }
-
-
 
         if (scaleFactorY < 1f) {
             scaleFactorY = 1f
@@ -113,13 +131,83 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     private fun drawGrid(canvas: Canvas) {
+        val border = pianoKeyHeight / 20f
 
+        val blackPianoKey = Color.parseColor("#444444")     // TODO: colors
+        val whitePianoKey = Color.parseColor("#CCCCCC")
+
+        val left = scrollX
+        val right = left + width
+
+        for (i in 0 until 127) {
+            // Vykresleni vnejsi casti
+            val bottom = height - (i * pianoKeyHeight)
+            val top = bottom - pianoKeyHeight
+
+            var key = i % 12
+
+            when (key) {
+                0, 2, 4, 5, 7, 9, 11 -> paint.color = whitePianoKey
+                1, 3, 6, 8, 10 -> paint.color = blackPianoKey
+            }
+
+            canvas.drawRect(left, top, right, bottom, paint)
+            when (key) {
+                0, 5 -> {
+                    paint.color = Color.GRAY
+                    canvas.drawRect(left, bottom - border, right, bottom, paint)
+                }
+
+                4, 11 -> {
+                    paint.color = Color.GRAY
+                    canvas.drawRect(left, top, right, top + border, paint)
+                }
+            }
+        }
+    }
+
+    // Budou potreba tyto metody pro konvert?
+    private fun pitchToHeightConverter(pitch: Int): Float {
+        return height / 2f  // FIXME: placeholder
+    }
+
+    private fun heightToPitchConverter(height: Float): Int {
+        return 60           // FIXME: placeholder
+    }
+
+    private fun drawNotes(canvas: Canvas) {
+        notes.forEach {
+            drawNote(canvas, it)        // TODO: barva noty
+        }
+    }
+
+    // Je potreba barva jako vstupni atribut?
+    private fun drawNote(canvas: Canvas, note: Note) {
+        val border = pianoKeyHeight / 10f
+        val bottom = height - (note.pitch * pianoKeyHeight)
+        val top = bottom - pianoKeyHeight
+        val left = note.start + pianoKeyWidth       // Posunuji o sirku klaves
+        val right = left + note.duration
+
+        // namalovat okraje
+        var noteRectF = RectF(left.toFloat(), top, right.toFloat(), bottom)
+        paint.color = Color.DKGRAY              // TODO: barvy
+        canvas.drawRect(noteRectF, paint)
+
+        // namalovat vnitrek
+        if (note.selected) {
+            paint.color = Color.BLUE            // TODO: barvy
+        } else {
+            paint.color = Color.YELLOW
+        }
+
+        noteRectF.set(noteRectF.left + border, noteRectF.top + border, noteRectF.right - border, noteRectF.bottom - border)
+        canvas.drawRect(noteRectF, paint)
     }
 
     private fun drawPiano(canvas: Canvas) {
         // Draw piano keys
-        val pianoKeyWidth = width / 16f
-        val pianoKeyHeight = height / 127f
+        val border = pianoKeyHeight / 20f
 
         val blackPianoKey = Color.BLACK
         val whitePianoKey = Color.WHITE
@@ -128,21 +216,30 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         val right = pianoKeyWidth + left
 
         for (i in 0 until 127) {
+            // Vykresleni vnejsi casti
             val bottom = height - (i * pianoKeyHeight)
             val top = bottom - pianoKeyHeight
 
             var key = i % 12
+
             when (key) {
                 0, 2, 4, 5, 7, 9, 11 -> paint.color = whitePianoKey
                 1, 3, 6, 8, 10 -> paint.color = blackPianoKey
             }
 
             canvas.drawRect(left, top, right, bottom, paint)
-        }
-    }
+            when (key) {
+                0, 5 -> {
+                    paint.color = Color.GRAY
+                    canvas.drawRect(left, bottom - border, right, bottom, paint)
+                }
 
-    private fun drawNotes(canvas: Canvas) {
-        // Code to draw the notes
+                4, 11 -> {
+                    paint.color = Color.GRAY
+                    canvas.drawRect(left, top, right, top + border, paint)
+                }
+            }
+        }
     }
 
     fun getNotes(): ArrayList<Note> {
@@ -206,10 +303,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         println("-" + detector.focusX + "+" + detector.focusY)*/
         scaleFactorX *= detector.scaleFactor
         scaleFactorY *= detector.scaleFactor
-        focusX = detector.focusX
-        focusY = detector.focusY
-
-        println(scaleFactorX)
 
         return true
     }
@@ -248,7 +341,44 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
         canvas.drawRect(400f, 400f, 800f, 800f, paint)
 
-        paint.color = Color.RED
+        paint.color = Color.BLUE
         canvas.drawRect(centerX - 50f, centerY - 50f, centerX + 50f, centerY + 50f, paint)
+
+        // Random vertex
+        paint.color = Color.RED
+        val vertices = floatArrayOf(
+            100f, 100f,  // first vertex
+            200f, 100f,  // second vertex
+            150f, 200f   // third vertex
+        )
+
+        val colors = intArrayOf(
+            Color.BLUE, Color.BLUE, Color.BLUE, -0x1000000, -0x1000000, -0x1000000
+        )
+
+        val vertexCount = vertices.size
+
+        canvas.drawVertices(
+            VertexMode.TRIANGLES, vertexCount, vertices,
+            0,null,0,
+            colors.map { it.toInt() }.toIntArray(),
+            0, null,0, 0, paint
+        )
+
+        /*canvas.drawVertices(
+            VertexMode.TRIANGLES,
+            verts.size, verts.toFloatArray(), 0,
+            null, 0, colors.map { it.toInt() }.toIntArray(), 0,
+            null, 0, 0,
+            paint
+        )
+        */
+    }
+
+    private fun debugAddNotes() {
+        var note = Note(60, 0,480, false)
+        notes.add(note)
+        note = Note(64, 240,480, true)
+        notes.add(note)
     }
 }
