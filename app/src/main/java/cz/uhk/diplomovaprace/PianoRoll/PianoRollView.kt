@@ -6,14 +6,13 @@ import android.graphics.Canvas.VertexMode
 import android.util.AttributeSet
 import android.view.*
 import android.view.GestureDetector.OnGestureListener
-import androidx.annotation.ColorInt
-import kotlin.math.sqrt
 
 class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(context, attrs),
     SurfaceHolder.Callback, OnGestureListener, ScaleGestureDetector.OnScaleGestureListener {
 
-    private val paint = Paint()
+    private var paint = Paint()
     private var notes = ArrayList<Note>()
+    private var pianoKeys = ArrayList<RectF>()
 
     private val gestureDetector = GestureDetector(context, this)
     private val scaleGestureDetector = ScaleGestureDetector(context, this)
@@ -23,16 +22,23 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private var scaleFactorX = 1f
     private var scaleFactorY = 1f
     private var scaling = false
+    private var scalingX = false
+    private var scalingY = false
+    private var startedSpanX = 0f
+    private var startedSpanY = 0f
     private var widthDifference = 0f
     private var heightDifference = 0f
     private var centerX = 0f
     private var centerY = 0f
+    private var timelineHeight = height / 20f
     private var pianoKeyWidth = width / 16f
-    private var pianoKeyHeight = height / 127f
+    private var pianoKeyHeight = height / 128f
+
 
     init {
         paint.color = Color.YELLOW
         paint.style = Paint.Style.FILL
+        paint.hinting = Paint.HINTING_OFF
         holder.addCallback(this)
         holder.addCallback(this)
     }
@@ -63,8 +69,11 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         heightDifference = height - (height / scaleFactorY)
         centerX = scrollX + width / 2f
         centerY = scrollY + height / 2f
-        pianoKeyWidth = width / 16f         // TODO: fixovana sirka
-        pianoKeyHeight = height / 127f
+        timelineHeight = height / 20f / scaleFactorY            // TODO: Aby uzivatel tuto promennou mohl menit
+        pianoKeyWidth = width / 7f / scaleFactorX               // TODO: Aby uzivatel tuto promennou mohl menit
+        pianoKeyHeight = (height - timelineHeight) / 128f
+
+        paint.hinting = Paint.LINEAR_TEXT_FLAG
 
         debugAddNotes()
         redrawAll()
@@ -83,14 +92,20 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         heightDifference = height - (height / scaleFactorY)
         centerX = scrollX + width / 2f
         centerY = scrollY + height / 2f
+        timelineHeight = height / 12f / scaleFactorY
         pianoKeyWidth = width / 7f / scaleFactorX       // TODO: sirka klaves pres nastaveni
+        pianoKeyHeight = (height - timelineHeight) / 128f
+
+        paint.textScaleX = scaleFactorY
 
         canvas.drawColor(Color.GRAY)        // TODO: set background color
 
+        // Zde se provadi transformace sceny
         canvas.translate(-scrollX, -scrollY)
         canvas.scale(scaleFactorX, scaleFactorY, centerX, centerY)
 
         drawGrid(canvas)
+        drawTimeline(canvas)
 
         drawNotes(canvas)
         drawPiano(canvas)
@@ -130,6 +145,10 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         }
     }
 
+    private fun drawTimeline(canvas: Canvas)  {
+
+    }
+
     private fun drawGrid(canvas: Canvas) {
         val border = pianoKeyHeight / 20f
 
@@ -139,7 +158,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         val left = scrollX
         val right = left + width
 
-        for (i in 0 until 127) {
+        for (i in 0 until 128) {
             // Vykresleni vnejsi casti
             val bottom = height - (i * pianoKeyHeight)
             val top = bottom - pianoKeyHeight
@@ -183,7 +202,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
     // Je potreba barva jako vstupni atribut?
     private fun drawNote(canvas: Canvas, note: Note) {
-        val border = pianoKeyHeight / 10f
+        val border = pianoKeyHeight / 20f
         val bottom = height - (note.pitch * pianoKeyHeight)
         val top = bottom - pianoKeyHeight
         val left = note.start + pianoKeyWidth       // Posunuji o sirku klaves
@@ -215,7 +234,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         val left = scrollX + widthDifference / 2f
         val right = pianoKeyWidth + left
 
-        for (i in 0 until 127) {
+        for (i in 0 until 128) {
             // Vykresleni vnejsi casti
             val bottom = height - (i * pianoKeyHeight)
             val top = bottom - pianoKeyHeight
@@ -229,7 +248,17 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
             canvas.drawRect(left, top, right, bottom, paint)
             when (key) {
-                0, 5 -> {
+                0 -> {
+                    paint.color = Color.GRAY
+                    canvas.drawRect(left, bottom - border, right, bottom, paint)
+
+                    val scaleNumber = (i / 12) - 2
+                    paint.textSize = pianoKeyHeight
+                    paint.color = Color.DKGRAY
+                    canvas.drawText("C$scaleNumber", left + 2f, bottom - pianoKeyHeight * 0.15f, paint)
+                }
+
+                5 -> {
                     paint.color = Color.GRAY
                     canvas.drawRect(left, bottom - border, right, bottom, paint)
                 }
@@ -301,20 +330,43 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         /*println("OnScale")
         println("----------"+detector.scaleFactor)
         println("-" + detector.focusX + "+" + detector.focusY)*/
-        scaleFactorX *= detector.scaleFactor
-        scaleFactorY *= detector.scaleFactor
+        if (detector.currentSpanX > 80f) {
+            scalingX = true
+        }
+
+        if (detector.currentSpanY > 80f) {
+            scalingY = true
+        }
+
+        if (scalingX) {
+            scaleFactorX *= detector.scaleFactor
+        }
+
+        if (scalingY) {
+            scaleFactorY *= detector.scaleFactor
+        }
 
         return true
     }
 
     override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
         scaling = true
+        startedSpanX = detector.currentSpanX
+        startedSpanY = detector.currentSpanY
+
+        if (detector.currentSpanX > detector.currentSpanY) {
+            scalingX = true
+        } else {
+            scalingY = true
+        }
         //println("OnScaleEnd")
         return true
     }
 
     override fun onScaleEnd(detector: ScaleGestureDetector) {
         scaling = false
+        scalingX = false
+        scalingY = false
         //println("OnScaleEnd")
     }
 
