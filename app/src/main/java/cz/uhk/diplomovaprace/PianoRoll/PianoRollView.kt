@@ -12,7 +12,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
     private var paint = Paint()
     private var notes = ArrayList<Note>()
-    private var pianoKeys = ArrayList<RectF>()
+    // TODO: vsechno dat do ArrayList()<RectF> -> pohlidam si tim klikani, vim, kde co je
 
     private val gestureDetector = GestureDetector(context, this)
     private val scaleGestureDetector = ScaleGestureDetector(context, this)
@@ -33,6 +33,10 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private var timelineHeight = height / 20f
     private var pianoKeyWidth = width / 16f
     private var pianoKeyHeight = height / 128f
+
+    private var barTimeSignature = 4 / 4f
+    private var beatLength = 480
+    private var barLength = barTimeSignature * 4 * beatLength
 
 
     init {
@@ -73,7 +77,9 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         pianoKeyWidth = width / 7f / scaleFactorX               // TODO: Aby uzivatel tuto promennou mohl menit
         pianoKeyHeight = (height - timelineHeight) / 128f
 
-        paint.hinting = Paint.LINEAR_TEXT_FLAG
+        barTimeSignature = 4 / 4f
+        beatLength = 480
+        barLength = barTimeSignature * 4 * beatLength
 
         debugAddNotes()
         redrawAll()
@@ -96,8 +102,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         pianoKeyWidth = width / 7f / scaleFactorX       // TODO: sirka klaves pres nastaveni
         pianoKeyHeight = (height - timelineHeight) / 128f
 
-        paint.textScaleX = scaleFactorY
-
         canvas.drawColor(Color.GRAY)        // TODO: set background color
 
         // Zde se provadi transformace sceny
@@ -105,11 +109,10 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         canvas.scale(scaleFactorX, scaleFactorY, centerX, centerY)
 
         drawGrid(canvas)
-        drawTimeline(canvas)
-
         drawNotes(canvas)
-        drawPiano(canvas)
+        drawTimelineAndPiano(canvas)
         //drawDebugLines(canvas)
+
 
         canvas.restore()
         unlockCanvas(canvas)
@@ -145,8 +148,77 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         }
     }
 
-    private fun drawTimeline(canvas: Canvas)  {
+    private fun drawTimelineAndPiano(canvas: Canvas)  {
+        // draw timeline
+        paint.color = Color.parseColor("#333333")   // TODO: barvy
+        var left = scrollX + widthDifference / 2f
+        var right = scrollX + width - (widthDifference / 2f)
+        var top = scrollY + heightDifference / 2f
+        var bottom = top + timelineHeight
+        canvas.drawRect(left, top, right, bottom, paint)
 
+        // draw time checkpoints (bars, ticks, etc.)
+        // first visible bar
+        var firstBar = left - (left % barLength) + pianoKeyWidth
+        paint.strokeWidth = 1f
+        var sixteenthLengths = 0
+        var actualTime = firstBar
+        var topOfTheLine = top
+        var upperColor = Color.parseColor("#ffffff")        // TODO: vsechny barvy
+        var bottomColor = Color.parseColor("#222222")
+        do {
+            // vykreslit vsechny cary
+            when (sixteenthLengths % 16) {
+                0 -> {
+                    topOfTheLine = top
+                    upperColor = Color.parseColor("#ffffff")
+                    bottomColor = Color.parseColor("#222222")
+                    paint.textSize = timelineHeight / 4f
+                    paint.color = upperColor
+                    canvas.drawText(((actualTime / barLength).toInt() + 1).toString(), actualTime + 5, top + timelineHeight / 4f, paint)
+                }
+
+                1, 3, 5, 7, 9, 11, 13, 15 -> {
+                    topOfTheLine = top + (timelineHeight / 16f * 12f )
+                    upperColor = Color.parseColor("#bbbbbb")
+                    bottomColor = Color.parseColor("#666666")
+                }
+
+                2, 6, 10, 14 -> {
+                    topOfTheLine = top + (timelineHeight / 16f * 11f )
+                    upperColor = Color.parseColor("#cccccc")
+                    bottomColor = Color.parseColor("#555555")
+                }
+
+                4, 12 -> {
+                    topOfTheLine = top + (timelineHeight / 16f * 10f )
+                    upperColor = Color.parseColor("#dddddd")
+                    bottomColor = Color.parseColor("#444444")
+                }
+
+                8 -> {
+                    topOfTheLine = top + (timelineHeight / 16f * 8f )
+                    upperColor = Color.parseColor("#eeeeee")
+                    bottomColor = Color.parseColor("#333333")
+                }
+            }
+
+
+            paint.color = upperColor
+            canvas.drawLine(actualTime, topOfTheLine, actualTime, bottom, paint)
+            paint.color = bottomColor
+            canvas.drawLine(actualTime, bottom, actualTime, height.toFloat(), paint)
+            actualTime += beatLength / 4f
+            sixteenthLengths++
+
+        } while (actualTime < scrollX + width - (widthDifference / 2f))
+
+        drawPiano(canvas)
+
+        // draw clear area
+        paint.color = Color.parseColor("#333333")
+        right = pianoKeyWidth + left
+        canvas.drawRect(left, top, right, bottom, paint)
     }
 
     private fun drawGrid(canvas: Canvas) {
@@ -185,7 +257,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         }
     }
 
-    // Budou potreba tyto metody pro konvert?
+    // TODO: Budou potreba tyto metody pro konvert?
     private fun pitchToHeightConverter(pitch: Int): Float {
         return height / 2f  // FIXME: placeholder
     }
@@ -200,7 +272,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         }
     }
 
-    // Je potreba barva jako vstupni atribut?
+    // TODO: Je potreba barva jako vstupni atribut?
     private fun drawNote(canvas: Canvas, note: Note) {
         val border = pianoKeyHeight / 20f
         val bottom = height - (note.pitch * pianoKeyHeight)
@@ -330,21 +402,24 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         /*println("OnScale")
         println("----------"+detector.scaleFactor)
         println("-" + detector.focusX + "+" + detector.focusY)*/
-        if (detector.currentSpanX > 80f) {
+        /*if (detector.currentSpanX > 80f) {
             scalingX = true
         }
 
         if (detector.currentSpanY > 80f) {
             scalingY = true
-        }
+        }*/
 
-        if (scalingX) {
+        scaleFactorX *= detector.scaleFactor
+        scaleFactorY *= detector.scaleFactor
+
+        /*if (scalingX) {
             scaleFactorX *= detector.scaleFactor
         }
 
         if (scalingY) {
             scaleFactorY *= detector.scaleFactor
-        }
+        }*/
 
         return true
     }
