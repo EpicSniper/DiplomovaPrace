@@ -127,12 +127,14 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     private fun checkBorders() {
-        if (scaleFactorX < 1f) {
-            scaleFactorX = 1f
+        if (scaleFactorX < 0.01f) {
+            scaleFactorX = 0.01f
         }
 
         if (scaleFactorY < 1f) {
             scaleFactorY = 1f
+        } else if (scaleFactorY > 10f) {
+            scaleFactorY = 10f
         }
 
         if (scrollX + widthDifference / 2f < 0f) {
@@ -160,13 +162,16 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         // draw time checkpoints (bars, ticks, etc.)
         // first visible bar
         var firstBar = left - (left % barLength) + pianoKeyWidth
-        paint.strokeWidth = 1f
         var sixteenthLengths = 0
         var actualTime = firstBar
         var topOfTheLine = top
         var upperColor = Color.parseColor("#ffffff")        // TODO: vsechny barvy
         var bottomColor = Color.parseColor("#222222")
+
+        paint.textScaleX = scaleFactorY / scaleFactorX
+        var barNumberCorrection = 1 - (pianoKeyWidth / barLength).toInt()
         do {
+            var renderLines = true
             // vykreslit vsechny cary
             when (sixteenthLengths % 16) {
                 0 -> {
@@ -175,44 +180,64 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
                     bottomColor = Color.parseColor("#222222")
                     paint.textSize = timelineHeight / 4f
                     paint.color = upperColor
-                    canvas.drawText(((actualTime / barLength).toInt() + 1).toString(), actualTime + 5, top + timelineHeight / 4f, paint)
+                    canvas.drawText(((actualTime / barLength).toInt() + barNumberCorrection).toString(), actualTime + 5, top + timelineHeight / 4f, paint)
                 }
 
                 1, 3, 5, 7, 9, 11, 13, 15 -> {
-                    topOfTheLine = top + (timelineHeight / 16f * 12f )
-                    upperColor = Color.parseColor("#bbbbbb")
-                    bottomColor = Color.parseColor("#666666")
+                    if (scaleFactorX > 0.32f) {
+                        topOfTheLine = top + (timelineHeight / 16f * 12f )
+                        upperColor = Color.parseColor("#bbbbbb")
+                        bottomColor = Color.parseColor("#666666")
+                    } else {
+                        renderLines = false
+                    }
                 }
 
                 2, 6, 10, 14 -> {
-                    topOfTheLine = top + (timelineHeight / 16f * 11f )
-                    upperColor = Color.parseColor("#cccccc")
-                    bottomColor = Color.parseColor("#555555")
+                    if (scaleFactorX > 0.16f) {
+                        topOfTheLine = top + (timelineHeight / 16f * 11f )
+                        upperColor = Color.parseColor("#cccccc")
+                        bottomColor = Color.parseColor("#555555")
+                    } else {
+                        renderLines = false
+                    }
                 }
 
                 4, 12 -> {
-                    topOfTheLine = top + (timelineHeight / 16f * 10f )
-                    upperColor = Color.parseColor("#dddddd")
-                    bottomColor = Color.parseColor("#444444")
+                    if (scaleFactorX > 0.08f) {
+                        topOfTheLine = top + (timelineHeight / 16f * 10f )
+                        upperColor = Color.parseColor("#dddddd")
+                        bottomColor = Color.parseColor("#444444")
+                    } else {
+                        renderLines = false
+                    }
+
                 }
 
                 8 -> {
-                    topOfTheLine = top + (timelineHeight / 16f * 8f )
-                    upperColor = Color.parseColor("#eeeeee")
-                    bottomColor = Color.parseColor("#333333")
+                    if (scaleFactorX > 0.04f) {
+                        topOfTheLine = top + (timelineHeight / 16f * 8f )
+                        upperColor = Color.parseColor("#eeeeee")
+                        bottomColor = Color.parseColor("#333333")
+                    } else {
+                        renderLines = false
+                    }
                 }
             }
 
+            if (renderLines) {
+                paint.color = upperColor
+                canvas.drawLine(actualTime, topOfTheLine, actualTime, bottom, paint)
+                paint.color = bottomColor
+                canvas.drawLine(actualTime, bottom, actualTime, height.toFloat(), paint)
+            }
 
-            paint.color = upperColor
-            canvas.drawLine(actualTime, topOfTheLine, actualTime, bottom, paint)
-            paint.color = bottomColor
-            canvas.drawLine(actualTime, bottom, actualTime, height.toFloat(), paint)
             actualTime += beatLength / 4f
             sixteenthLengths++
 
         } while (actualTime < scrollX + width - (widthDifference / 2f))
 
+        // draw piano
         drawPiano(canvas)
 
         // draw clear area
@@ -226,9 +251,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
         val blackPianoKey = Color.parseColor("#444444")     // TODO: colors
         val whitePianoKey = Color.parseColor("#CCCCCC")
-
-        val left = scrollX
-        val right = left + width
+        val left = scrollX + widthDifference / 2f
+        val right = left + width / scaleFactorX
 
         for (i in 0 until 128) {
             // Vykresleni vnejsi casti
@@ -410,16 +434,18 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             scalingY = true
         }*/
 
-        scaleFactorX *= detector.scaleFactor
-        scaleFactorY *= detector.scaleFactor
 
-        /*if (scalingX) {
+
+        if (scalingX) {
             scaleFactorX *= detector.scaleFactor
         }
 
         if (scalingY) {
             scaleFactorY *= detector.scaleFactor
-        }*/
+        }
+
+        /*scaleFactorX *= detector.scaleFactor
+        scaleFactorY *= detector.scaleFactor*/
 
         return true
     }
