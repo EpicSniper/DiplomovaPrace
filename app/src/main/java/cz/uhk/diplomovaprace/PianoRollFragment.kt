@@ -30,6 +30,5 @@ class PianoRollFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         // set the data for the piano roll view
-        //pianoRollView.setData()
     }
 }
