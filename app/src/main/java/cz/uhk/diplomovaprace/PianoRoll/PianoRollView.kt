@@ -7,13 +7,16 @@ import android.util.AttributeSet
 import android.view.*
 import android.view.GestureDetector.OnGestureListener
 
+
 class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(context, attrs),
     SurfaceHolder.Callback, OnGestureListener, ScaleGestureDetector.OnScaleGestureListener {
 
     private var paint = Paint()
     private var notes = ArrayList<Note>()
     private var selectedNotes = ArrayList<Note>()
+    private var playingNotes = ArrayList<Note>()
     private var pianoKeys = ArrayList<RectF>()  // TODO: vyuzit tento ArrayList
+    private var buttons = ArrayList<RectF>() // 0: play/stop button
     // TODO: vsechno dat do ArrayList()<RectF> -> pohlidam si tim klikani, vim, kde co je
 
     private var drawThread: DrawThread? = null
@@ -44,9 +47,11 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
     private var isPlaying = false
     private var lineOnTime = 0f
+    private var movingTimeLine = false
     private var elapsedTime = System.currentTimeMillis()
     private var lastFrameTime = System.currentTimeMillis()
     private var currentTime = System.currentTimeMillis()
+    private var soundJava = SoundJava(context)
 
     init {
         paint.color = Color.YELLOW
@@ -56,7 +61,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         setWillNotDraw(false)
     }
 
-    private inner class DrawThread(private val surfaceHolder: SurfaceHolder) : Thread() {
+    private inner class DrawThread() : Thread() {
         override fun run() {
             while (isPlaying) {
                 invalidate()
@@ -66,19 +71,22 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
         fun stopDrawing() {
             isPlaying = false
+            invalidate()
         }
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         gestureDetector.onTouchEvent(event)
         scaleGestureDetector.onTouchEvent(event)
-        //redrawAll()
+        if (!isPlaying) {
+            redrawAll()
+        }
 
         return true
     }
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
-        //redrawAll()
+
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
@@ -104,16 +112,21 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         barLength = barTimeSignature * 4 * beatLength
         tempo = 60f
 
-        isPlaying = true
+        isPlaying = false
         lineOnTime = 0f
+        movingTimeLine = false
         elapsedTime = System.currentTimeMillis()
         lastFrameTime = System.currentTimeMillis()
         currentTime = System.currentTimeMillis()
 
+        rectFArrayListInicialization()
+
         debugAddNotes()
 
-        drawThread = DrawThread(holder)
+        drawThread = DrawThread()
         drawThread?.start()
+
+        soundJava = SoundJava(context)
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
@@ -148,12 +161,20 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         canvas.translate(-scrollX, -scrollY)
         canvas.scale(scaleFactorX, scaleFactorY, centerX, centerY)
 
+        // rendering
         drawGrid(canvas)
         rescaleRectsOfNotes(notes)
         drawNotes(canvas)
         drawTimelineAndPiano(canvas)
+        drawButtons(canvas)
 
         //drawDebugLines(canvas)
+
+        // playing
+        if (isPlaying) {
+            playNotes(canvas)
+        }
+
 
         canvas.restore()
         unlockCanvas(canvas)
@@ -203,6 +224,10 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         paint.strokeWidth = 10f / scaleFactorX
         canvas.drawLine(lineOnTime + pianoKeyWidth, 0f, lineOnTime + pianoKeyWidth, height.toFloat(), paint)
         paint.strokeWidth = 0f
+    }
+
+    private fun resetTime() {
+        lastFrameTime = System.currentTimeMillis()
     }
 
     private fun drawTimelineAndPiano(canvas: Canvas)  {
@@ -340,6 +365,52 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         }
     }
 
+    private fun rectFArrayListInicialization() {
+        buttons.add(0, RectF(0f, 0f, 0f, 0f))   // index 0: play/stop button
+    }
+
+    private fun drawButtons(canvas: Canvas) {
+        // TODO: play/stop button
+        paint.color = Color.RED             // TODO: color
+        val top = scrollY + heightDifference / 2f
+        val buttonBottom = top + (height - height / 30f) / scaleFactorY
+        val buttonTop = top + (height - height / 10f) / scaleFactorY
+        val playButtonHeight = (buttonBottom - buttonTop) * scaleFactorY /scaleFactorX
+        val playButtonLeft = ((width - playButtonHeight) / 2f) + scrollX
+        buttons[0] = RectF(playButtonLeft, buttonTop, playButtonLeft + playButtonHeight, buttonBottom)
+        //canvas.drawRect(buttons[0], paint)
+        val widthOfRectangle = playButtonHeight / 5f
+
+        if (isPlaying) {
+            // rendering pause (2 rectangles)
+            canvas.drawRect(playButtonLeft + widthOfRectangle, buttonTop, playButtonLeft + widthOfRectangle * 2f, buttonBottom, paint)
+            canvas.drawRect(playButtonLeft + widthOfRectangle * 3f, buttonTop, playButtonLeft + widthOfRectangle * 4f, buttonBottom, paint)
+        } else {
+            // draw triangle
+            val triangleVerticies = floatArrayOf(
+                playButtonLeft + widthOfRectangle, buttonTop,  // top vertex
+                playButtonLeft + widthOfRectangle, buttonBottom,  // bottom vertex
+                playButtonLeft + playButtonHeight, buttonTop + (buttonBottom - buttonTop) / 2f   // right vertex
+            )
+
+            val colors = intArrayOf(
+                Color.RED, Color.RED, Color.RED, -0x1000000, -0x1000000, -0x1000000         // TODO: color
+            )
+
+            val vertexCount = triangleVerticies.size
+
+            canvas.drawVertices(
+                VertexMode.TRIANGLES, vertexCount, triangleVerticies,
+                0,null,0,
+                colors.map { it.toInt() }.toIntArray(),
+                0, null,0, 0, paint
+            )
+        }
+
+        // TODO: edit note button???
+        // TODO: other buttons???
+    }
+
     // TODO: Budou potreba tyto metody pro konvert?
     private fun pitchToHeightConverter(pitch: Int): Float {
         return height / 2f  // FIXME: placeholder
@@ -347,6 +418,29 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
     private fun heightToPitchConverter(height: Float): Int {
         return 60           // FIXME: placeholder
+    }
+
+    private fun pitchToNameConverter(pitch: Int): String {
+        var noteName = "";
+        when (pitch % 12) {
+            0 -> noteName += "c"
+            1 -> noteName += "cis"
+            2 -> noteName += "d"
+            3 -> noteName += "dis"
+            4 -> noteName += "e"
+            5 -> noteName += "f"
+            6 -> noteName += "fis"
+            7 -> noteName += "g"
+            8 -> noteName += "gis"
+            9 -> noteName += "a"
+            10 -> noteName += "ais"
+            11 -> noteName += "b"
+        }
+
+        var scaleNumber = (pitch / 12) - 2
+        var scaleStringNumber = scaleNumber.toString().replace("-", "m")
+        noteName += scaleStringNumber
+        return noteName
     }
 
     private fun drawNotes(canvas: Canvas) {
@@ -422,6 +516,30 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         }
     }
 
+    private fun playNotes(canvas: Canvas) {
+        // TODO: Prehravat noty tady
+        notes.forEach {
+            if (lineOnTime >= it.start) {
+
+                if (playingNotes.contains(it)) {
+                    if (lineOnTime > it.start + it.duration) {
+                        // stop note
+                        playingNotes.remove(it)
+                        soundJava.stopSound(it.streamId)
+                    }
+                } else {
+                    if (lineOnTime > it.start + it.duration) {
+
+                    } else {
+                        // play note
+                        playingNotes.add(it)
+                        it.streamId = soundJava.playSound(pitchToNameConverter(it.pitch))
+                    }
+                }
+            }
+        }
+    }
+
     fun getNotes(): ArrayList<Note> {
         return this.notes
     }
@@ -445,9 +563,69 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         return RectF(left, top, right, bottom)
     }
 
+    private fun stopAllSounds() {
+        playingNotes.forEach {
+            soundJava.stopSound(it.streamId)
+        }
+
+        playingNotes.clear()
+    }
+
+    private fun onSingleTapUpEvent(eventX: Float, eventY: Float) {
+        if(buttons[0].contains(eventX, eventY)) {
+            isPlaying = !isPlaying
+            if (isPlaying) {
+                drawThread = DrawThread()
+                drawThread?.start()
+                resetTime()
+                stopAllSounds()
+            } else {
+                stopAllSounds()
+                drawThread?.stopDrawing()
+                drawThread = null
+            }
+        }
+    }
+
+    private fun onDownEvent(eventX: Float, eventY: Float) {
+        var top = scrollY + heightDifference / 2f
+        var bottom = top + timelineHeight
+        movingTimeLine = false
+        if (eventY > top && eventY <= bottom) {
+            // taplo se na timeline -> presunout line
+            movingTimeLine = true
+            if (eventX - pianoKeyWidth > 0) {
+                lineOnTime = eventX - pianoKeyWidth
+            } else {
+                lineOnTime = 0f
+            }
+        }
+    }
+
+    private fun onScrollingEvent(eventX1: Float, eventY1: Float, eventX2: Float, eventY2: Float) {
+        if (movingTimeLine) {
+            if (eventX2 - pianoKeyWidth > 0) {
+                lineOnTime = eventX2 - pianoKeyWidth
+            } else {
+                lineOnTime = 0f
+            }
+        }
+    }
+
+    private fun convertEventX(eventX: Float): Float {
+        return scrollX + ((width - width / scaleFactorX) / 2f) + (eventX / scaleFactorX)
+    }
+
+    private fun convertEventY(eventY: Float): Float {
+        return scrollY + ((height - height / scaleFactorY) / 2f) + (eventY / scaleFactorY)
+    }
+
     override fun onDown(event: MotionEvent): Boolean {
         /*println("------- ON DOWN -------")
         println("X: " + event.x + " |Y: " + event.y)*/
+        val actualTapX = convertEventX(event.x)
+        val actualTapY = convertEventY(event.y)
+        onDownEvent(actualTapX, actualTapY)
         return true
     }
 
@@ -459,9 +637,10 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     override fun onSingleTapUp(event: MotionEvent): Boolean {
         /*println("------- ON SINGLE TAP -------")
         println("X: " + event.x + " |Y: " + event.y)*/
-        var actualTapX = scrollX + ((width - width / scaleFactorX) / 2f) + (event.x / scaleFactorX)
-        var actualTapY = scrollY + ((height - height / scaleFactorY) / 2f) + (event.x / scaleFactorY)
+        val actualTapX = convertEventX(event.x)
+        val actualTapY = convertEventY(event.y)
 
+        onSingleTapUpEvent(actualTapX, actualTapY)
         return true
     }
 
@@ -470,11 +649,12 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         println("DOWN - X: " + event1.x + " |Y: " + event1.y)
         println("DOWN - X: " + event2.x + " |Y: " + event2.y)
         println("DISTANCE - X: " + distanceX + " |Y: " + distanceY)*/
-        if (!scaling) {
+        if (!scaling && !movingTimeLine) {
             scrollX += distanceX / scaleFactorX
             scrollY += distanceY / scaleFactorY
         }
 
+        onScrollingEvent(convertEventX(event1.x), convertEventY(event1.y), convertEventX(event2.x), convertEventY(event2.y))
         return true
     }
 
@@ -495,26 +675,14 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         /*println("OnScale")
         println("----------"+detector.scaleFactor)
         println("-" + detector.focusX + "+" + detector.focusY)*/
-        /*if (detector.currentSpanX > 80f) {
-            scalingX = true
-        }
 
-        if (detector.currentSpanY > 80f) {
-            scalingY = true
-        }*/
-
-
-
-        if (scalingX) {
+        if (scalingX && !movingTimeLine) {
             scaleFactorX *= detector.scaleFactor
         }
 
-        if (scalingY) {
+        if (scalingY && !movingTimeLine) {
             scaleFactorY *= detector.scaleFactor
         }
-
-        /*scaleFactorX *= detector.scaleFactor
-        scaleFactorY *= detector.scaleFactor*/
 
         return true
     }
@@ -533,7 +701,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             scalingX = true
         }
 
-        //println("OnScaleEnd")
+        //println("OnScaleBegin")
         return true
     }
 
@@ -590,26 +758,25 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             colors.map { it.toInt() }.toIntArray(),
             0, null,0, 0, paint
         )
-
-        /*canvas.drawVertices(
-            VertexMode.TRIANGLES,
-            verts.size, verts.toFloatArray(), 0,
-            null, 0, colors.map { it.toInt() }.toIntArray(), 0,
-            null, 0, 0,
-            paint
-        )
-        */
     }
 
     private fun debugAddNotes() {
         var rectF = getRectFromNoteInfo(60, 0, 480)
-        var note = Note(60, 0,480, rectF)
+        var note = Note(60, 0,480, rectF, null)
         notes.add(note)
 
         selectedNotes.add(note)
 
         rectF = getRectFromNoteInfo(64, 240,480)
-        note = Note(64, 240,480, rectF)
+        note = Note(64, 240,960, rectF, null)
+        notes.add(note)
+
+        rectF = getRectFromNoteInfo(64, 1440,960)
+        note = Note(60, 1440,480, rectF, null)
+        notes.add(note)
+
+        rectF = getRectFromNoteInfo(64, 1440,960)
+        note = Note(64, 1440,960, rectF, null)
         notes.add(note)
     }
 }
