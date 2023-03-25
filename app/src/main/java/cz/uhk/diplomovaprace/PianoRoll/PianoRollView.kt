@@ -367,10 +367,24 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
     private fun rectFArrayListInicialization() {
         buttons.add(0, RectF(0f, 0f, 0f, 0f))   // index 0: play/stop button
+        inicializePianoKeys()
+    }
+
+    private fun inicializePianoKeys() {
+        val left = scrollX + widthDifference / 2f
+        val right = pianoKeyWidth + left
+
+        for (i in 0 until 128) {
+            // Vykresleni vnejsi casti
+            val bottom = height - (i * pianoKeyHeight)
+            val top = bottom - pianoKeyHeight
+            val rectF = RectF(left, top, right, bottom)
+            pianoKeys.add(rectF)
+        }
     }
 
     private fun drawButtons(canvas: Canvas) {
-        // TODO: play/stop button
+        // play/stop button
         paint.color = Color.RED             // TODO: color
         val top = scrollY + heightDifference / 2f
         val buttonBottom = top + (height - height / 30f) / scaleFactorY
@@ -479,45 +493,44 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         val left = scrollX + widthDifference / 2f
         val right = pianoKeyWidth + left
 
-        for (i in 0 until 128) {
-            // Vykresleni vnejsi casti
-            val bottom = height - (i * pianoKeyHeight)
-            val top = bottom - pianoKeyHeight
+        pianoKeys.forEachIndexed { i, it ->
+            it.left = left
+            it.right = right
+            it.bottom = height - (i * pianoKeyHeight)
+            it.top = it.bottom - pianoKeyHeight
 
             var key = i % 12
-
             when (key) {
                 0, 2, 4, 5, 7, 9, 11 -> paint.color = whitePianoKey
                 1, 3, 6, 8, 10 -> paint.color = blackPianoKey
             }
 
-            canvas.drawRect(left, top, right, bottom, paint)
+            canvas.drawRect(it, paint)
             when (key) {
                 0 -> {
                     paint.color = Color.GRAY
-                    canvas.drawRect(left, bottom - border, right, bottom, paint)
+                    canvas.drawRect(it.left, it.bottom - border, it.right, it.bottom, paint)
 
                     val scaleNumber = (i / 12) - 2
                     paint.textSize = pianoKeyHeight * 0.6f
                     paint.color = Color.DKGRAY
-                    canvas.drawText("C$scaleNumber", left + 2f, bottom - pianoKeyHeight * 0.15f, paint)
+                    canvas.drawText("C$scaleNumber", it.left + 2f, it.bottom - pianoKeyHeight * 0.15f, paint)
                 }
 
                 5 -> {
                     paint.color = Color.GRAY
-                    canvas.drawRect(left, bottom - border, right, bottom, paint)
+                    canvas.drawRect(it.left, it.bottom - border, it.right, it.bottom, paint)
                 }
 
                 4, 11 -> {
                     paint.color = Color.GRAY
-                    canvas.drawRect(left, top, right, top + border, paint)
+                    canvas.drawRect(it.left, it.top, it.right, it.top + border, paint)
                 }
             }
         }
     }
 
     private fun playNotes(canvas: Canvas) {
-        // TODO: Prehravat noty tady
         notes.forEach {
             if (lineOnTime >= it.start) {
 
