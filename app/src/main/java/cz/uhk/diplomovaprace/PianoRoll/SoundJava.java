@@ -21,10 +21,20 @@ public class SoundJava {
     private int LOOP = 0;
     private float RATE = 1.0f;
     private Map<String, Integer> sounds = new HashMap<String, Integer>();
+    private int minNote = 48;
+    private int maxNote = 108;
 
     public SoundJava (Context context) {
         this.context = context;
         loadSounds();
+    }
+
+    public int getMinNote() {
+        return minNote;
+    }
+
+    public int getMaxNote() {
+        return maxNote;
     }
 
     public void loadSounds() {
@@ -117,7 +127,11 @@ public class SoundJava {
         sounds.put("c7", soundPool.load(context.getApplicationContext(), R.raw.c7,1));
     }
 
-    public int playSound(String note) { // sound is already loaded
+    public int playSound(String note) {
+        if (note == "null") {
+            return 0;
+        }
+
         return soundPool.play(sounds.get(note), LEFT_VOL, RIGHT_VOL, PRIORITY, LOOP, RATE);
     }
 
