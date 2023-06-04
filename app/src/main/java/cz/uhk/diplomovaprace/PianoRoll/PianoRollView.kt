@@ -17,9 +17,11 @@ import cz.uhk.diplomovaprace.PianoRoll.Midi.MidiCreator
 import cz.uhk.diplomovaprace.PianoRoll.Midi.MidiFactory
 import cz.uhk.diplomovaprace.PianoRoll.Midi.MidiPlayer
 import cz.uhk.diplomovaprace.PianoRoll.Midi.Track
+import cz.uhk.diplomovaprace.PianoRoll.Note
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.*
 
 
 class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(context, attrs),
@@ -195,6 +197,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         canvas.translate(-scrollX, -scrollY)
         canvas.scale(scaleFactorX, scaleFactorY, centerX, centerY)
 
+
         // rendering
         drawGrid(canvas)
         rescaleRectsOfNotes(notes)
@@ -238,15 +241,72 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         audioRecord.startRecording()
 
         val isRecording = true
+        var numSamplesRead = audioRecord.read(audioData, 0, bufferSize)
+        var numSamplesReadArray = ArrayList<Int>()
+        var counter = 0
         while (isRecording) {
-            val numSamplesRead = audioRecord.read(audioData, 0, bufferSize)
-            // apply pitch detection algorithm to audioData
-            // extract pitch information from the output of the pitch detection algorithm
-            // perform desired actions with the pitch information
+            val buffer = ShortArray(bufferSize)
+            val samplesRead = audioRecord.read(buffer, 0, buffer.size)
+            numSamplesReadArray.add(numSamplesRead)
+            if (counter == 2) {
+                break
+            }
+
+            var pitch = getFftPitch(buffer, sampleRate)
+            println(pitch)
+
+            counter ++
         }
+
+        println(numSamplesReadArray)
 
         audioRecord.stop()
         audioRecord.release()
+    }
+
+    fun getFftPitch(audioData: ShortArray, sampleRate: Int): Double {
+        val numSamples = audioData.size
+        val real = DoubleArray(numSamples)
+        val imag = DoubleArray(numSamples)
+
+        // convert audio samples to array of doubles between -1 and 1
+        for (i in 0 until numSamples) {
+            real[i] = audioData[i] / 32768.0 // 32768.0 is the maximum value of a signed 16-bit integer
+        }
+
+        // apply window function to reduce spectral leakage
+        val window = DoubleArray(numSamples)
+        for (i in 0 until numSamples) {
+            window[i] = 0.54 - 0.46 * cos(2 * PI * i / (numSamples - 1))
+            real[i] *= window[i]
+        }
+
+        // apply FFT
+        val magnitude = DoubleArray(numSamples / 2)
+        val phase = DoubleArray(numSamples / 2)
+        val n = numSamples / 2
+        for (i in 0 until n) {
+            var sumReal = 0.0
+            var sumImag = 0.0
+            for (j in 0 until numSamples) {
+                val angle = 2 * PI * i * j / numSamples
+                sumReal +=  real[j] * cos(angle) + imag[j] * sin(angle)
+                sumImag += -real[j] * sin(angle) + imag[j] * cos(angle)
+            }
+            magnitude[i] = sqrt(sumReal * sumReal + sumImag * sumImag)
+            phase[i] = atan2(sumImag, sumReal)
+        }
+
+        // find index of maximum magnitude peak
+        var maxIndex = 0
+        for (i in 1 until n) {
+            if (magnitude[i] > magnitude[maxIndex]) {
+                maxIndex = i
+            }
+        }
+
+        // calculate pitch in Hz
+        return sampleRate * maxIndex / numSamples.toDouble()
     }
 
     fun processPitch(pitchInHz: Float) {
@@ -408,6 +468,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         paint.color = Color.parseColor("#333333")
         right = pianoKeyWidth + left
         canvas.drawRect(left, top, right, bottom, paint)
+
+        // test draw
     }
 
     private fun drawGrid(canvas: Canvas) {
@@ -446,8 +508,14 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     private fun rectFArrayListInicialization() {
-        buttons.add(0, RectF(0f, 0f, 0f, 0f))   // index 0: play/stop button
+        inicializeButtons()
         inicializePianoKeys()
+    }
+
+    private fun inicializeButtons() {
+        buttons.add(0, RectF(0f, 0f, 0f, 0f))   // index 0: play/stop button
+        buttons.add(1, RectF(0f, 0f, 0f, 0f))   // index 1: play/stop button
+        buttons.add(2, RectF(0f, 0f, 0f, 0f))   // index 2: play/stop button
     }
 
     private fun inicializePianoKeys() {
@@ -465,7 +533,28 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
     private fun drawButtons(canvas: Canvas) {
         // play/stop button
-        paint.color = Color.RED             // TODO: color
+        paint.color = Color.WHITE             // TODO: color
+
+        // Setting top and bottom pixels of buttons
+        val top = scrollY + heightDifference / 2f
+        val buttonBottom = top + (height - height / 30f) / scaleFactorY
+        val buttonTop = top + (height - height / 10f) / scaleFactorY
+        val buttonHeight = (buttonBottom - buttonTop) * scaleFactorY / scaleFactorX
+        val buttonCenterY = buttonTop + (buttonHeight / 2f)
+        val playButtonLeft = (width / 2f) - (buttonHeight / 2f) + scrollX
+        val playButtonRight = (width / 2f) + (buttonHeight / 2f) + scrollX
+        val buttonCenterX = playButtonLeft + buttonHeight / 2f
+        buttons[0] = RectF(playButtonLeft, buttonTop, playButtonRight, buttonBottom)
+        canvas.drawOval(buttons[0], paint)
+        buttons[1] = RectF(playButtonLeft - buttonHeight * 1.2f, buttonTop, playButtonRight - buttonHeight * 1.2f, buttonBottom)
+        buttons[2] = RectF(playButtonLeft + buttonHeight * 1.2f, buttonTop, playButtonRight + buttonHeight * 1.2f, buttonBottom)
+        canvas.drawOval(buttons[1], paint)
+        canvas.drawOval(buttons[2], paint)
+
+
+
+
+        /*paint.color = Color.RED             // TODO: color
         val top = scrollY + heightDifference / 2f
         val buttonBottom = top + (height - height / 30f) / scaleFactorY
         val buttonTop = top + (height - height / 10f) / scaleFactorY
@@ -499,7 +588,9 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
                 colors.map { it.toInt() }.toIntArray(),
                 0, null,0, 0, paint
             )
-        }
+        }*/
+
+        // TODO: record button
 
         // TODO: edit note button???
         // TODO: other buttons???
