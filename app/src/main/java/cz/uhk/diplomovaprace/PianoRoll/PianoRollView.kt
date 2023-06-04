@@ -33,7 +33,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private var playingNotes = ArrayList<Note>()
     private var pianoKeys = ArrayList<RectF>()  // TODO: vyuzit tento ArrayList
     private var playingPianoKeys = ArrayList<Int>() // onTap only
-    private var buttons = ArrayList<RectF>() // 0: play/stop button
+    private var buttons = ArrayList<RectF>() // 0: play; 1: record; 2: stop;
     // TODO: vsechno dat do ArrayList()<RectF> -> pohlidam si tim klikani, vim, kde co je
 
     private var drawThread: DrawThread? = null
@@ -63,6 +63,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private var tempo = 60
 
     private var isPlaying = false
+    private var isRecording = false                 // TODO: integrate recording function
     private var lineOnTime = 0f
     private var movingTimeLine = false
     private var elapsedTime = System.currentTimeMillis()
@@ -133,6 +134,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         tempo = 60
 
         isPlaying = false
+        isRecording = false
         lineOnTime = 0f
         movingTimeLine = false
         elapsedTime = System.currentTimeMillis()
@@ -224,6 +226,10 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
         canvas.restore()
         unlockCanvas(canvas)
+    }
+
+    public fun stopPlaying() {
+        isPlaying = false
     }
 
     @SuppressLint("RestrictedApi", "MissingPermission")
@@ -513,9 +519,9 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     private fun inicializeButtons() {
-        buttons.add(0, RectF(0f, 0f, 0f, 0f))   // index 0: play/stop button
-        buttons.add(1, RectF(0f, 0f, 0f, 0f))   // index 1: play/stop button
-        buttons.add(2, RectF(0f, 0f, 0f, 0f))   // index 2: play/stop button
+        buttons.add(0, RectF(0f, 0f, 0f, 0f))   // index 0: play button
+        buttons.add(1, RectF(0f, 0f, 0f, 0f))   // index 1: record button
+        buttons.add(2, RectF(0f, 0f, 0f, 0f))   // index 2: stop button
     }
 
     private fun inicializePianoKeys() {
@@ -532,68 +538,72 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     private fun drawButtons(canvas: Canvas) {
-        // play/stop button
-        paint.color = Color.WHITE             // TODO: color
-
         // Setting top and bottom pixels of buttons
         val top = scrollY + heightDifference / 2f
         val buttonBottom = top + (height - height / 30f) / scaleFactorY
         val buttonTop = top + (height - height / 10f) / scaleFactorY
         val buttonHeight = (buttonBottom - buttonTop) * scaleFactorY / scaleFactorX
-        val buttonCenterY = buttonTop + (buttonHeight / 2f)
+        val buttonCenterY = buttonTop + (buttonBottom - buttonTop) / 2f
         val playButtonLeft = (width / 2f) - (buttonHeight / 2f) + scrollX
         val playButtonRight = (width / 2f) + (buttonHeight / 2f) + scrollX
-        val buttonCenterX = playButtonLeft + buttonHeight / 2f
+
         buttons[0] = RectF(playButtonLeft, buttonTop, playButtonRight, buttonBottom)
-        canvas.drawOval(buttons[0], paint)
         buttons[1] = RectF(playButtonLeft - buttonHeight * 1.2f, buttonTop, playButtonRight - buttonHeight * 1.2f, buttonBottom)
         buttons[2] = RectF(playButtonLeft + buttonHeight * 1.2f, buttonTop, playButtonRight + buttonHeight * 1.2f, buttonBottom)
-        canvas.drawOval(buttons[1], paint)
-        canvas.drawOval(buttons[2], paint)
 
-
-
-
-        /*paint.color = Color.RED             // TODO: color
-        val top = scrollY + heightDifference / 2f
-        val buttonBottom = top + (height - height / 30f) / scaleFactorY
-        val buttonTop = top + (height - height / 10f) / scaleFactorY
-        val playButtonHeight = (buttonBottom - buttonTop) * scaleFactorY /scaleFactorX
-        val playButtonLeft = ((width - playButtonHeight) / 2f) + scrollX
-        buttons[0] = RectF(playButtonLeft, buttonTop, playButtonLeft + playButtonHeight, buttonBottom)
-        //canvas.drawRect(buttons[0], paint)
-        val widthOfRectangle = playButtonHeight / 5f
-
-        if (isPlaying) {
-            // rendering pause (2 rectangles)
-            canvas.drawRect(playButtonLeft + widthOfRectangle, buttonTop, playButtonLeft + widthOfRectangle * 2f, buttonBottom, paint)
-            canvas.drawRect(playButtonLeft + widthOfRectangle * 3f, buttonTop, playButtonLeft + widthOfRectangle * 4f, buttonBottom, paint)
+        if (isPlaying || isRecording) {
+            paint.color = Color.GRAY                    // TODO: color
+            canvas.drawOval(buttons[0], paint)          // play button background
+            canvas.drawOval(buttons[1], paint)          // record button background
+            paint.color = Color.WHITE                   // TODO: color
+            canvas.drawOval(buttons[2], paint)          // stop button background
         } else {
-            // draw triangle
-            val triangleVerticies = floatArrayOf(
-                playButtonLeft + widthOfRectangle, buttonTop,  // top vertex
-                playButtonLeft + widthOfRectangle, buttonBottom,  // bottom vertex
-                playButtonLeft + playButtonHeight, buttonTop + (buttonBottom - buttonTop) / 2f   // right vertex
-            )
+            paint.color = Color.WHITE                   // TODO: color
+            canvas.drawOval(buttons[0], paint)          // play button background
+            canvas.drawOval(buttons[1], paint)          // record button background
+            paint.color = Color.GRAY                    // TODO: color
+            canvas.drawOval(buttons[2], paint)          // stop button background
+        }
 
-            val colors = intArrayOf(
-                Color.RED, Color.RED, Color.RED, -0x1000000, -0x1000000, -0x1000000         // TODO: color
-            )
+        // draw play button symbol
+        val heightCorrection = (buttonBottom - buttonTop) / 5f
+        val widthCorrection = (playButtonRight - playButtonLeft) / 4f;
+        val triangleVerticies = floatArrayOf(
+            playButtonLeft + widthCorrection, buttonTop + heightCorrection,  // top vertex
+            playButtonLeft + widthCorrection, buttonBottom - heightCorrection,  // bottom vertex
+            playButtonRight - widthCorrection, buttonCenterY   // right vertex
+        )
 
-            val vertexCount = triangleVerticies.size
+        val colors = intArrayOf(
+            Color.BLACK, Color.BLACK, Color.BLACK, -0x1000000, -0x1000000, -0x1000000         // TODO: color
+        )
 
-            canvas.drawVertices(
-                VertexMode.TRIANGLES, vertexCount, triangleVerticies,
-                0,null,0,
-                colors.map { it.toInt() }.toIntArray(),
-                0, null,0, 0, paint
-            )
-        }*/
+        val vertexCount = triangleVerticies.size
+        canvas.drawVertices(
+            VertexMode.TRIANGLES, vertexCount, triangleVerticies,
+            0,null,0,
+            colors.map { it.toInt() }.toIntArray(),
+            0, null,0, 0, paint
+        )
 
-        // TODO: record button
+        // draw record button symbol
+        paint.color = Color.RED
+        var symbolHeightCorrection = (buttonBottom - buttonTop) / 3.5f
+        var symbolWidthCorrection = (playButtonRight - playButtonLeft) / 3.5f
+        canvas.drawOval(buttons[1].left + symbolWidthCorrection,
+            buttons[1].top + symbolHeightCorrection,
+            buttons[1].right - symbolWidthCorrection,
+            buttons[1].bottom - symbolHeightCorrection, paint)
 
-        // TODO: edit note button???
-        // TODO: other buttons???
+        paint.color = Color.BLACK
+        symbolHeightCorrection = (buttonBottom - buttonTop) / 3.2f
+        symbolWidthCorrection = (playButtonRight - playButtonLeft) / 3.2f
+        canvas.drawRect(buttons[2].left + symbolWidthCorrection,
+            buttons[2].top + symbolHeightCorrection,
+            buttons[2].right - symbolWidthCorrection,
+            buttons[2].bottom - symbolHeightCorrection, paint)
+
+        // TODO: edit button
     }
 
     // TODO: Budou potreba tyto metody pro konvert?
@@ -748,19 +758,33 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     private fun onSingleTapUpEvent(eventX: Float, eventY: Float) {
-        // play/stop button
+        // play button
+        // FIXME: not updated
         if(buttons[0].contains(eventX, eventY)) {
-            isPlaying = !isPlaying
-            if (isPlaying) {
+            if (!isPlaying && !isRecording) {
+                isPlaying = true
                 drawThread = DrawThread()
                 drawThread?.start()
                 resetTime()
                 midiPlayer.onMidiStart()
-            } else {
+            }
+        } else if (buttons[1].contains(eventX, eventY)) {
+            if (!isRecording && !isPlaying) {
+                isRecording = true
+                // TODO: start recording
+            }
+        } else if (buttons[2].contains(eventX, eventY)) {
+            if (isPlaying) {
+                isPlaying = false
                 drawThread?.stopDrawing()
                 drawThread = null
                 playingNotes.clear()
                 midiPlayer.stopAllNotes()
+            }
+
+            if (isRecording) {
+                isRecording = false
+                // TODO: stop recording
             }
         }
     }

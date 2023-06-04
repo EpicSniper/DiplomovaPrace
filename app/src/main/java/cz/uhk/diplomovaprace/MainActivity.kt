@@ -10,12 +10,14 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import android.view.Menu
 import android.view.MenuItem
 import androidx.activity.result.contract.ActivityResultContracts
+import cz.uhk.diplomovaprace.PianoRoll.PianoRollView
 import cz.uhk.diplomovaprace.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
+    private lateinit var pianoRollView: PianoRollView
 
     private val permissionLauncherSingle = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -40,13 +42,11 @@ class MainActivity : AppCompatActivity() {
         appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, appBarConfiguration)
 
-
-
         // TODO: another permissions
+        pianoRollView = findViewById(R.id.piano_roll_view)
         permissionLauncherSingle.launch(android.Manifest.permission.RECORD_AUDIO)
         binding.fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show()
+            pianoRollView.stopPlaying()
         }
     }
 
