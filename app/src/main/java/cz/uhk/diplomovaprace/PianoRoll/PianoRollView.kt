@@ -79,9 +79,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
     private var isRecording = false                 // TODO: integrate recording function
     private var recordingLineTime = ArrayList<Float>()
-    private var recordingLineFft = ArrayList<Double>()
     private var recordingLineAutocorrelation = ArrayList<Double>()
-    private var recordingLineAutocorrelationHPS = ArrayList<Double>()
     private var noteHeights = ArrayList<Float>()
     private var randomCounter = 0
 
@@ -132,17 +130,10 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         }
         override fun run() {
             while (isRecording) {
-
-
-
-                // ----------------------------
                 val buffer = ShortArray(bufferSize)
                 val samplesRead = audioRecord.read(buffer, 0, buffer.size)
 
                 recordingLineTime.add(lineOnTime)
-                //recordingLineFft.add(getFftPitch(buffer, sampleRate))
-                //recordingLineAutocorrelation.add(getAutocorrelationPitch(buffer, sampleRate))
-                //recordingLineAutocorrelationHPS.add(getHPSPitch(buffer, sampleRate))
                 recordingLineAutocorrelation.add(getAutocorrelationPitch(buffer, sampleRate))
 
                 invalidate()
@@ -296,73 +287,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     private fun onCreateTestFunction() {
-        val baseFrequency = 55.0 // Frekvence noty A3
-        val baseOctave = 1 // Oktáva noty A3
-        val baseDistance = 100 // Vzdálenost v pixelech pro jeden oktávový skok
 
-        val noteFrequency = 220.0 // Frekvence noty A4
-        val noteOctave = 3 // Oktáva noty A4
-
-        val distanceInPixels = getDistanceInPixels(baseFrequency, noteFrequency, baseDistance, 1)
-        val octaveDifference = noteOctave - baseOctave
-
-        val totalDistanceInPixels = distanceInPixels + octaveDifference * baseDistance
-        println(totalDistanceInPixels)
     }
-
-    private fun getDistanceInPixels(frequency1: Double, frequency2: Double, octaveDistance: Int, baseDistance: Int): Int {
-        val ratio = frequency2 / frequency1
-        val distance = octaveDistance * log(ratio, 2.0)
-        return (distance * baseDistance).toInt()
-    }
-
-    private fun getHPSPitch(audioData: ShortArray, sampleRate: Int): Double {
-        val numSamples = audioData.size
-        val audioDataDouble = DoubleArray(numSamples)
-
-        // Convert audio samples to array of doubles between -1 and 1
-        for (i in 0 until numSamples) {
-            audioDataDouble[i] = audioData[i] / 32768.0 // 32768.0 is the maximum value of a signed 16-bit integer
-        }
-
-        // Apply window function to reduce spectral leakage
-        val window = DoubleArray(numSamples)
-        for (i in 0 until numSamples) {
-            window[i] = 0.54 - 0.46 * cos(2 * PI * i / (numSamples - 1))
-            audioDataDouble[i] *= window[i]
-        }
-
-        // Apply FFT
-        val fft = DoubleFFT_1D(numSamples.toLong())
-        fft.realForward(audioDataDouble)
-
-        // Calculate magnitude spectrum
-        val magnitude = DoubleArray(numSamples / 2)
-        for (i in 0 until numSamples / 2) {
-            val re = audioDataDouble[2 * i]
-            val im = audioDataDouble[2 * i + 1]
-            magnitude[i] = sqrt(re * re + im * im)
-        }
-
-        // Downsample the spectrum and calculate the HPS
-        val downsampledSize = numSamples / 2 / 2 / 2
-        val hps = DoubleArray(downsampledSize)
-        for (i in 0 until downsampledSize) {
-            hps[i] = magnitude[i] * magnitude[i / 2] * magnitude[i / 4]
-        }
-
-        // Find the index of the maximum peak in the HPS
-        var maxIndex = 0
-        for (i in 1 until downsampledSize) {
-            if (hps[i] > hps[maxIndex]) {
-                maxIndex = i
-            }
-        }
-
-        // Calculate pitch in Hz
-        return sampleRate.toDouble() * maxIndex.toDouble() / numSamples.toDouble()
-    }
-
 
     private fun getAutocorrelationPitch(audioData: ShortArray, sampleRate: Int): Double {
         val numSamples = audioData.size
@@ -396,51 +322,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         return sampleRate.toDouble() / pitchPeriod.toDouble()
     }
 
-    private fun getFftPitch(audioData: ShortArray, sampleRate: Int): Double {
-        val numSamples = audioData.size
-        val real = DoubleArray(numSamples)
-        val imag = DoubleArray(numSamples)
-
-        // convert audio samples to array of doubles between -1 and 1
-        for (i in 0 until numSamples) {
-            real[i] = audioData[i] / 32768.0 // 32768.0 is the maximum value of a signed 16-bit integer
-        }
-
-        // apply window function to reduce spectral leakage
-        val window = DoubleArray(numSamples)
-        for (i in 0 until numSamples) {
-            window[i] = 0.54 - 0.46 * cos(2 * PI * i / (numSamples - 1))
-            real[i] *= window[i]
-        }
-
-        // apply FFT
-        val magnitude = DoubleArray(numSamples / 2)
-        val phase = DoubleArray(numSamples / 2)
-        val n = numSamples / 2
-        for (i in 0 until n) {
-            var sumReal = 0.0
-            var sumImag = 0.0
-            for (j in 0 until numSamples) {
-                val angle = 2 * PI * i * j / numSamples
-                sumReal +=  real[j] * cos(angle) + imag[j] * sin(angle)
-                sumImag += -real[j] * sin(angle) + imag[j] * cos(angle)
-            }
-            magnitude[i] = sqrt(sumReal * sumReal + sumImag * sumImag)
-            phase[i] = atan2(sumImag, sumReal)
-        }
-
-        // find index of maximum magnitude peak
-        var maxIndex = 0
-        for (i in 1 until n) {
-            if (magnitude[i] > magnitude[maxIndex]) {
-                maxIndex = i
-            }
-        }
-
-        // calculate pitch in Hz
-        return sampleRate * maxIndex / numSamples.toDouble()
-    }
-
     // a4Height - default 440Hz
     private fun setHertzToNotes(a4Height: Float) {
         var noteArray = ArrayList<Float>()
@@ -467,19 +348,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
         return note
     }
-
-    /*private fun hzToNote(pitchHz: Double): String {
-        val notes = arrayOf("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B")
-        val noteIndex = ((12 * Math.log(pitchHz / 440.0) / Math.log(2.0)) + 57).toInt()
-        val octave = noteIndex / 12
-        val note = notes[noteIndex % 12]
-
-        println(notes)
-        println(noteIndex)
-        println(octave)
-        println(note)
-        return "$note$octave"
-    }*/
 
     private fun lockCanvas(): Canvas {
         return holder.lockCanvas()
@@ -521,9 +389,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     private fun drawRecordingLine(canvas: Canvas) {
-        if (recordingLineTime.size == recordingLineAutocorrelation.size) {
-
-            for (i in 0 until recordingLineTime.size) {
+        if (recordingLineTime.size >= recordingLineAutocorrelation.size) {
+            for (i in 0 until recordingLineAutocorrelation.size) {
                 if (i != 0) {
                     paint.color = Color.GREEN
                     canvas.drawLine(
@@ -531,50 +398,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
                         recordingLineAutocorrelation[i - 1].toFloat(),
                         recordingLineTime[i],
                         recordingLineAutocorrelation[i].toFloat(),
-                        paint
-                    )
-                }
-            }
-        }
-    }
-
-    private fun drawRecordingLineAll(canvas: Canvas) {
-
-        println("// -----------------------------")
-        println(recordingLineTime)
-        println(recordingLineFft)
-        println(recordingLineAutocorrelation)
-        println(recordingLineAutocorrelationHPS)
-        if (recordingLineAutocorrelation.size != 0) {
-            //println(closestNote(recordingLineAutocorrelation[recordingLineAutocorrelation.size - 1].toFloat()))
-        }
-
-        if (recordingLineTime.size == recordingLineFft.size && recordingLineTime.size == recordingLineAutocorrelation.size && recordingLineTime.size == recordingLineAutocorrelationHPS.size) {
-
-            for (i in 0 until recordingLineTime.size) {
-                if (i != 0) {
-                    paint.color = Color.RED
-                    canvas.drawLine(
-                        recordingLineTime[i - 1],
-                        recordingLineFft[i - 1].toFloat(),
-                        recordingLineTime[i],
-                        recordingLineFft[i].toFloat(),
-                        paint
-                    )
-                    paint.color = Color.GREEN
-                    canvas.drawLine(
-                        recordingLineTime[i - 1],
-                        recordingLineAutocorrelation[i - 1].toFloat(),
-                        recordingLineTime[i],
-                        recordingLineAutocorrelation[i].toFloat(),
-                        paint
-                    )
-                    paint.color = Color.BLUE
-                    canvas.drawLine(
-                        recordingLineTime[i - 1],
-                        recordingLineAutocorrelationHPS[i - 1].toFloat(),
-                        recordingLineTime[i],
-                        recordingLineAutocorrelationHPS[i].toFloat(),
                         paint
                     )
                 }
