@@ -21,8 +21,14 @@ import cz.uhk.diplomovaprace.PianoRoll.Note
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.apache.commons.math3.transform.DftNormalization
+import org.apache.commons.math3.transform.FastFourierTransformer
+import org.apache.commons.math3.transform.TransformType
+import org.jtransforms.fft.DoubleFFT_1D
 import kotlin.math.*
-
+import kotlin.math.log10
+import kotlin.math.pow
+import kotlin.math.log2
 
 class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(context, attrs),
     SurfaceHolder.Callback, OnGestureListener, ScaleGestureDetector.OnScaleGestureListener {
@@ -37,6 +43,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     // TODO: vsechno dat do ArrayList()<RectF> -> pohlidam si tim klikani, vim, kde co je
 
     private var drawThread: DrawThread? = null
+    private var recordThread: RecordThread? = null
     private val gestureDetector = GestureDetector(context, this)
     private val scaleGestureDetector = ScaleGestureDetector(context, this)
 
@@ -63,13 +70,20 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private var tempo = 60
 
     private var isPlaying = false
-    private var isRecording = false                 // TODO: integrate recording function
     private var lineOnTime = 0f
     private var movingTimeLine = false
     private var elapsedTime = System.currentTimeMillis()
     private var lastFrameTime = System.currentTimeMillis()
     private var currentTime = System.currentTimeMillis()
     private var midiPlayer = MidiPlayer()
+
+    private var isRecording = false                 // TODO: integrate recording function
+    private var recordingLineTime = ArrayList<Float>()
+    private var recordingLineFft = ArrayList<Double>()
+    private var recordingLineAutocorrelation = ArrayList<Double>()
+    private var recordingLineAutocorrelationHPS = ArrayList<Double>()
+    private var noteHeights = ArrayList<Float>()
+    private var randomCounter = 0
 
     init {
         paint.color = Color.YELLOW
@@ -87,8 +101,58 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             }
         }
 
-        fun stopDrawing() {
+        public fun stopDrawing() {
             isPlaying = false
+            invalidate()
+        }
+    }
+
+    private inner class RecordThread() : Thread() {
+        private var audioSource = MediaRecorder.AudioSource.MIC
+        private var sampleRate = 44100
+        private var channelConfig = AudioFormat.CHANNEL_IN_MONO
+        private var audioFormat = AudioFormat.ENCODING_PCM_16BIT
+        private var bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
+        @SuppressLint("MissingPermission")
+        private var audioRecord = AudioRecord(audioSource, sampleRate, channelConfig, audioFormat, bufferSize)
+        private var audioData = ShortArray(bufferSize)
+
+        @SuppressLint("RestrictedApi", "MissingPermission")
+        override fun start() {
+            super.start()
+
+            audioSource = MediaRecorder.AudioSource.MIC
+            sampleRate = 44100
+            channelConfig = AudioFormat.CHANNEL_IN_MONO
+            audioFormat = AudioFormat.ENCODING_PCM_16BIT
+            bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
+            audioRecord = AudioRecord(audioSource, sampleRate, channelConfig, audioFormat, bufferSize)
+            audioData = ShortArray(bufferSize)
+            audioRecord.startRecording()
+        }
+        override fun run() {
+            while (isRecording) {
+
+
+
+                // ----------------------------
+                val buffer = ShortArray(bufferSize)
+                val samplesRead = audioRecord.read(buffer, 0, buffer.size)
+
+                recordingLineTime.add(lineOnTime)
+                //recordingLineFft.add(getFftPitch(buffer, sampleRate))
+                //recordingLineAutocorrelation.add(getAutocorrelationPitch(buffer, sampleRate))
+                //recordingLineAutocorrelationHPS.add(getHPSPitch(buffer, sampleRate))
+                recordingLineAutocorrelation.add(getAutocorrelationPitch(buffer, sampleRate))
+
+                invalidate()
+            }
+        }
+
+        public fun stopRecording() {
+            isRecording = false
+            audioRecord.stop()
+            audioRecord.release()
             invalidate()
         }
     }
@@ -96,7 +160,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     override fun onTouchEvent(event: MotionEvent): Boolean {
         gestureDetector.onTouchEvent(event)
         scaleGestureDetector.onTouchEvent(event)
-        if (!isPlaying) {
+        if (!isPlaying || !isRecording) {
             redrawAll()
         }
 
@@ -110,9 +174,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     override fun surfaceCreated(holder: SurfaceHolder) {
         // Inicialiazce promennych
         // Promenne pro prvotni zobrazeni
-
-
-
         scrollX = 0f
         scrollY = 0f
         scaleFactorX = 1f
@@ -134,19 +195,18 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         tempo = 60
 
         isPlaying = false
-        isRecording = false
         lineOnTime = 0f
         movingTimeLine = false
         elapsedTime = System.currentTimeMillis()
         lastFrameTime = System.currentTimeMillis()
         currentTime = System.currentTimeMillis()
 
+        isRecording = false
+        randomCounter = 0
+
         rectFArrayListInicialization()
 
         debugAddNotes()
-
-        drawThread = DrawThread()
-        drawThread?.start()
 
         midiPlayer = MidiPlayer()
 
@@ -162,13 +222,14 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
         val midiFactory = MidiFactory()
         midiFactory.main(context)
-        onCreateTestFunction()
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
         // Stop drawing on the surface
         drawThread?.stopDrawing()
         drawThread = null
+        recordThread?.stopRecording()
+        recordThread = null
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -192,7 +253,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         pianoKeyHeight = (height - timelineHeight) / 128f
 
 
-
         canvas.drawColor(Color.GRAY)        // TODO: set background color
 
         // Zde se provadi transformace sceny
@@ -206,6 +266,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         drawNotes(canvas)
         drawTimelineAndPiano(canvas)
         drawButtons(canvas)
+        drawRecordingLine(canvas)
 
         //drawDebugLines(canvas)
 
@@ -215,7 +276,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             elapsedTime = currentTime - lastFrameTime
             lineOnTime += ((tempo / 60f) * beatLength) * elapsedTime / 1000f
             lastFrameTime = currentTime
-            playNotes(canvas)
+            playNotes()
         }
 
         var midiCreator = MidiCreator()
@@ -224,6 +285,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         midiCreator.addTrack(track)
         var midiData = midiCreator.createMidiData(context,4,4, tempo)
 
+        setHertzToNotes(440f)
+        onCreateTestFunction()
         canvas.restore()
         unlockCanvas(canvas)
     }
@@ -232,45 +295,108 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         isPlaying = false
     }
 
-    @SuppressLint("RestrictedApi", "MissingPermission")
     private fun onCreateTestFunction() {
-        val audioSource = MediaRecorder.AudioSource.MIC
-        val sampleRate = 44100
-        val channelConfig = AudioFormat.CHANNEL_IN_MONO
-        val audioFormat = AudioFormat.ENCODING_PCM_16BIT
-        val bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
+        val baseFrequency = 55.0 // Frekvence noty A3
+        val baseOctave = 1 // Oktáva noty A3
+        val baseDistance = 100 // Vzdálenost v pixelech pro jeden oktávový skok
 
-        val audioRecord = AudioRecord(audioSource, sampleRate, channelConfig, audioFormat, bufferSize)
+        val noteFrequency = 220.0 // Frekvence noty A4
+        val noteOctave = 3 // Oktáva noty A4
 
-        val audioData = ShortArray(bufferSize)
+        val distanceInPixels = getDistanceInPixels(baseFrequency, noteFrequency, baseDistance, 1)
+        val octaveDifference = noteOctave - baseOctave
 
-        audioRecord.startRecording()
-
-        val isRecording = true
-        var numSamplesRead = audioRecord.read(audioData, 0, bufferSize)
-        var numSamplesReadArray = ArrayList<Int>()
-        var counter = 0
-        while (isRecording) {
-            val buffer = ShortArray(bufferSize)
-            val samplesRead = audioRecord.read(buffer, 0, buffer.size)
-            numSamplesReadArray.add(numSamplesRead)
-            if (counter == 2) {
-                break
-            }
-
-            var pitch = getFftPitch(buffer, sampleRate)
-            println(pitch)
-
-            counter ++
-        }
-
-        println(numSamplesReadArray)
-
-        audioRecord.stop()
-        audioRecord.release()
+        val totalDistanceInPixels = distanceInPixels + octaveDifference * baseDistance
+        println(totalDistanceInPixels)
     }
 
-    fun getFftPitch(audioData: ShortArray, sampleRate: Int): Double {
+    private fun getDistanceInPixels(frequency1: Double, frequency2: Double, octaveDistance: Int, baseDistance: Int): Int {
+        val ratio = frequency2 / frequency1
+        val distance = octaveDistance * log(ratio, 2.0)
+        return (distance * baseDistance).toInt()
+    }
+
+    private fun getHPSPitch(audioData: ShortArray, sampleRate: Int): Double {
+        val numSamples = audioData.size
+        val audioDataDouble = DoubleArray(numSamples)
+
+        // Convert audio samples to array of doubles between -1 and 1
+        for (i in 0 until numSamples) {
+            audioDataDouble[i] = audioData[i] / 32768.0 // 32768.0 is the maximum value of a signed 16-bit integer
+        }
+
+        // Apply window function to reduce spectral leakage
+        val window = DoubleArray(numSamples)
+        for (i in 0 until numSamples) {
+            window[i] = 0.54 - 0.46 * cos(2 * PI * i / (numSamples - 1))
+            audioDataDouble[i] *= window[i]
+        }
+
+        // Apply FFT
+        val fft = DoubleFFT_1D(numSamples.toLong())
+        fft.realForward(audioDataDouble)
+
+        // Calculate magnitude spectrum
+        val magnitude = DoubleArray(numSamples / 2)
+        for (i in 0 until numSamples / 2) {
+            val re = audioDataDouble[2 * i]
+            val im = audioDataDouble[2 * i + 1]
+            magnitude[i] = sqrt(re * re + im * im)
+        }
+
+        // Downsample the spectrum and calculate the HPS
+        val downsampledSize = numSamples / 2 / 2 / 2
+        val hps = DoubleArray(downsampledSize)
+        for (i in 0 until downsampledSize) {
+            hps[i] = magnitude[i] * magnitude[i / 2] * magnitude[i / 4]
+        }
+
+        // Find the index of the maximum peak in the HPS
+        var maxIndex = 0
+        for (i in 1 until downsampledSize) {
+            if (hps[i] > hps[maxIndex]) {
+                maxIndex = i
+            }
+        }
+
+        // Calculate pitch in Hz
+        return sampleRate.toDouble() * maxIndex.toDouble() / numSamples.toDouble()
+    }
+
+
+    private fun getAutocorrelationPitch(audioData: ShortArray, sampleRate: Int): Double {
+        val numSamples = audioData.size
+        val audioDataDouble = DoubleArray(numSamples)
+
+        // Convert audio samples to array of doubles between -1 and 1
+        for (i in 0 until numSamples) {
+            audioDataDouble[i] = audioData[i] / 32768.0 // 32768.0 is the maximum value of a signed 16-bit integer
+        }
+
+        val minPeriod = (sampleRate / 2000) // Minimum period for pitch detection (e.g., 1000 Hz)
+        val maxPeriod = (sampleRate / 80) // Maximum period for pitch detection (e.g., 200 Hz)
+
+        var pitchPeriod = 0
+        var maxCorrelation = 0.0
+
+        // Calculate autocorrelation for different pitch periods
+        for (period in minPeriod until maxPeriod) {
+            var correlation = 0.0
+            for (i in 0 until numSamples - period) {
+                correlation += audioDataDouble[i] * audioDataDouble[i + period]
+            }
+
+            if (correlation > maxCorrelation) {
+                maxCorrelation = correlation
+                pitchPeriod = period
+            }
+        }
+
+        // Calculate pitch in Hz
+        return sampleRate.toDouble() / pitchPeriod.toDouble()
+    }
+
+    private fun getFftPitch(audioData: ShortArray, sampleRate: Int): Double {
         val numSamples = audioData.size
         val real = DoubleArray(numSamples)
         val imag = DoubleArray(numSamples)
@@ -315,23 +441,45 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         return sampleRate * maxIndex / numSamples.toDouble()
     }
 
-    fun processPitch(pitchInHz: Float) {
-        if (pitchInHz >= 110 && pitchInHz < 123.47) {
-            //A
-        } else if (pitchInHz >= 123.47 && pitchInHz < 130.81) {
-            //B
-        } else if (pitchInHz >= 130.81 && pitchInHz < 146.83) {
-            //C
-        } else if (pitchInHz >= 146.83 && pitchInHz < 164.81) {
-            //D
-        } else if (pitchInHz >= 164.81 && pitchInHz <= 174.61) {
-            //E
-        } else if (pitchInHz >= 174.61 && pitchInHz < 185) {
-            //F
-        } else if (pitchInHz >= 185 && pitchInHz < 196) {
-            //G
+    // a4Height - default 440Hz
+    private fun setHertzToNotes(a4Height: Float) {
+        var noteArray = ArrayList<Float>()
+        for (i in 0 until 128) {
+            noteArray.add(a4Height * 2f.pow((i-69f)/12f))
         }
+
+        noteHeights = noteArray
     }
+
+    // height in Hz
+    private fun closestNote(height: Float): Int {
+        var note = 0
+        for (i in 1 until 128) {
+            if (height < noteHeights[i]) {
+                note = i - 1
+                break
+            }
+        }
+
+        if (height - noteHeights[note] > noteHeights[note + 1] - height) {
+            note++
+        }
+
+        return note
+    }
+
+    /*private fun hzToNote(pitchHz: Double): String {
+        val notes = arrayOf("C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B")
+        val noteIndex = ((12 * Math.log(pitchHz / 440.0) / Math.log(2.0)) + 57).toInt()
+        val octave = noteIndex / 12
+        val note = notes[noteIndex % 12]
+
+        println(notes)
+        println(noteIndex)
+        println(octave)
+        println(note)
+        return "$note$octave"
+    }*/
 
     private fun lockCanvas(): Canvas {
         return holder.lockCanvas()
@@ -370,6 +518,68 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         paint.strokeWidth = 10f / scaleFactorX
         canvas.drawLine(lineOnTime + pianoKeyWidth, 0f, lineOnTime + pianoKeyWidth, height.toFloat(), paint)
         paint.strokeWidth = 0f
+    }
+
+    private fun drawRecordingLine(canvas: Canvas) {
+        if (recordingLineTime.size == recordingLineAutocorrelation.size) {
+
+            for (i in 0 until recordingLineTime.size) {
+                if (i != 0) {
+                    paint.color = Color.GREEN
+                    canvas.drawLine(
+                        recordingLineTime[i - 1],
+                        recordingLineAutocorrelation[i - 1].toFloat(),
+                        recordingLineTime[i],
+                        recordingLineAutocorrelation[i].toFloat(),
+                        paint
+                    )
+                }
+            }
+        }
+    }
+
+    private fun drawRecordingLineAll(canvas: Canvas) {
+
+        println("// -----------------------------")
+        println(recordingLineTime)
+        println(recordingLineFft)
+        println(recordingLineAutocorrelation)
+        println(recordingLineAutocorrelationHPS)
+        if (recordingLineAutocorrelation.size != 0) {
+            //println(closestNote(recordingLineAutocorrelation[recordingLineAutocorrelation.size - 1].toFloat()))
+        }
+
+        if (recordingLineTime.size == recordingLineFft.size && recordingLineTime.size == recordingLineAutocorrelation.size && recordingLineTime.size == recordingLineAutocorrelationHPS.size) {
+
+            for (i in 0 until recordingLineTime.size) {
+                if (i != 0) {
+                    paint.color = Color.RED
+                    canvas.drawLine(
+                        recordingLineTime[i - 1],
+                        recordingLineFft[i - 1].toFloat(),
+                        recordingLineTime[i],
+                        recordingLineFft[i].toFloat(),
+                        paint
+                    )
+                    paint.color = Color.GREEN
+                    canvas.drawLine(
+                        recordingLineTime[i - 1],
+                        recordingLineAutocorrelation[i - 1].toFloat(),
+                        recordingLineTime[i],
+                        recordingLineAutocorrelation[i].toFloat(),
+                        paint
+                    )
+                    paint.color = Color.BLUE
+                    canvas.drawLine(
+                        recordingLineTime[i - 1],
+                        recordingLineAutocorrelationHPS[i - 1].toFloat(),
+                        recordingLineTime[i],
+                        recordingLineAutocorrelationHPS[i].toFloat(),
+                        paint
+                    )
+                }
+            }
+        }
     }
 
     private fun resetTime() {
@@ -645,7 +855,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         }
     }
 
-    // TODO: Je potreba barva jako vstupni atribut?
     private fun drawNote(canvas: Canvas, note: Note) {
         val border = pianoKeyHeight / 20f
 
@@ -712,7 +921,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         }
     }
 
-    private fun playNotes(canvas: Canvas) {
+    private fun playNotes() {
         notes.forEach {
             if (lineOnTime >= it.start) {
                 if (playingNotes.contains(it)) {
@@ -758,8 +967,9 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     private fun onSingleTapUpEvent(eventX: Float, eventY: Float) {
-        // play button
-        // FIXME: not updated
+        // buttons[0] - play button
+        // buttons[1] - recording button
+        // buttons[2] - stop button
         if(buttons[0].contains(eventX, eventY)) {
             if (!isPlaying && !isRecording) {
                 isPlaying = true
@@ -771,7 +981,14 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         } else if (buttons[1].contains(eventX, eventY)) {
             if (!isRecording && !isPlaying) {
                 isRecording = true
-                // TODO: start recording
+                recordThread = RecordThread()
+                recordThread?.start()
+
+                isPlaying = true
+                drawThread = DrawThread()
+                drawThread?.start()
+                resetTime()
+                midiPlayer.onMidiStart()
             }
         } else if (buttons[2].contains(eventX, eventY)) {
             if (isPlaying) {
@@ -784,7 +1001,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
             if (isRecording) {
                 isRecording = false
-                // TODO: stop recording
+                recordThread?.stopRecording()
+                recordThread = null
             }
         }
     }
