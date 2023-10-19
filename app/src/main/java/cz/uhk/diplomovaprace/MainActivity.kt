@@ -45,8 +45,9 @@ class MainActivity : AppCompatActivity() {
         // TODO: another permissions
         pianoRollView = findViewById(R.id.piano_roll_view)
         permissionLauncherSingle.launch(android.Manifest.permission.RECORD_AUDIO)
+        /* tlacitko */
         binding.fab.setOnClickListener { view ->
-            pianoRollView.stopPlaying()
+            pianoRollView.changeEditingMode()
         }
     }
 

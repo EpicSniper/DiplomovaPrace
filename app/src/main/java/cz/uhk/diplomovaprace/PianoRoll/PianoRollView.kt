@@ -83,6 +83,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private var noteHeights = ArrayList<Float>()
     private var randomCounter = 0
 
+    private var isEditing = false
+
     init {
         paint.color = Color.YELLOW
         paint.style = Paint.Style.FILL
@@ -128,6 +130,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             audioData = ShortArray(bufferSize)
             audioRecord.startRecording()
         }
+
         override fun run() {
             while (isRecording) {
                 val buffer = ShortArray(bufferSize)
@@ -144,6 +147,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             isRecording = false
             audioRecord.stop()
             audioRecord.release()
+            convertRecordingToNotes()
             invalidate()
         }
     }
@@ -194,6 +198,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
         isRecording = false
         randomCounter = 0
+
+        isEditing = false
 
         rectFArrayListInicialization()
 
@@ -290,6 +296,15 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
     }
 
+    public fun changeEditingMode() {
+        isEditing = !isEditing
+        if (!isEditing) {
+            selectedNotes.clear()
+        }
+
+        invalidate()
+    }
+
     private fun getAutocorrelationPitch(audioData: ShortArray, sampleRate: Int): Double {
         val numSamples = audioData.size
         val audioDataDouble = DoubleArray(numSamples)
@@ -330,23 +345,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         }
 
         noteHeights = noteArray
-    }
-
-    // height in Hz
-    private fun closestNote(height: Float): Int {
-        var note = 0
-        for (i in 1 until 128) {
-            if (height < noteHeights[i]) {
-                note = i - 1
-                break
-            }
-        }
-
-        if (height - noteHeights[note] > noteHeights[note + 1] - height) {
-            note++
-        }
-
-        return note
     }
 
     private fun lockCanvas(): Canvas {
@@ -403,6 +401,63 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
                 }
             }
         }
+    }
+
+    private fun convertRecordingToNotes() {
+        var recordedNotes = ArrayList<Int>()
+        var newNotes = ArrayList<Note>()
+        recordingLineAutocorrelation.forEach {
+            recordedNotes.add(closestNote(it.toFloat()))
+        }
+
+        var lastNote = 0
+        var startOfTheLastNote = 0
+        recordedNotes.forEachIndexed { i, note ->
+            if (i != 0) {
+                if (lastNote != note) {
+                    val pitch = note.toByte()
+                    val start = startOfTheLastNote
+                    val duration = recordingLineTime[i].toInt() - startOfTheLastNote
+                    val rectF = getRectFromNoteInfo(pitch, start,duration)
+                    newNotes.add(Note(pitch, start, duration, rectF))
+                    lastNote = note
+                    startOfTheLastNote = recordingLineTime[i].toInt()
+                }
+            } else {
+                lastNote = note
+                startOfTheLastNote = recordingLineTime[i].toInt()
+            }
+        }
+
+        val pitch = lastNote.toByte()
+        val start = startOfTheLastNote
+        val duration = recordingLineTime.last().toInt() - startOfTheLastNote
+        val rectF = getRectFromNoteInfo(pitch, start,duration)
+        newNotes.add(Note(pitch, start, duration, rectF))
+
+        newNotes.forEach {
+            notes.add(it)
+        }
+
+        recordingLineTime.clear()
+        recordingLineAutocorrelation.clear()
+    }
+
+    // height in Hz
+    private fun closestNote(height: Float): Int {
+        var note = 0
+        for (i in 1 until 128) {
+            if (height < noteHeights[i]) {
+                note = i - 1
+                break
+            }
+        }
+
+        if (height - noteHeights[note] > noteHeights[note + 1] - height) {
+            note++
+        }
+
+        return note
     }
 
     private fun resetTime() {
@@ -789,7 +844,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         return RectF(left, top, right, bottom)
     }
 
-    private fun onSingleTapUpEvent(eventX: Float, eventY: Float) {
+    private fun buttonsOnSingleTapUpEvent(eventX: Float, eventY: Float) {
         // buttons[0] - play button
         // buttons[1] - recording button
         // buttons[2] - stop button
@@ -827,6 +882,24 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
                 recordThread?.stopRecording()
                 recordThread = null
             }
+        }
+    }
+
+    private fun onSingleTapUpEvent(eventX: Float, eventY: Float) {
+        if (isEditing) {
+            notes.forEach {
+                if (it.rectF.contains(eventX, eventY)) {
+                    if (selectedNotes.contains(it)) {
+                        selectedNotes.remove(it)
+                    } else {
+                        selectedNotes.add(it)
+                        midiPlayer.playNote(it.pitch)
+                        midiPlayer.stopNote(it.pitch)
+                    }
+                }
+            }
+        } else {
+            buttonsOnSingleTapUpEvent(eventX, eventY)
         }
     }
 
@@ -1027,8 +1100,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         var rectF = getRectFromNoteInfo(60, 0, 480)
         var note = Note(60, 0,480, rectF)
         notes.add(note)
-
-        selectedNotes.add(note)
 
         rectF = getRectFromNoteInfo(64, 240,480)
         note = Note(64, 240,960, rectF)
