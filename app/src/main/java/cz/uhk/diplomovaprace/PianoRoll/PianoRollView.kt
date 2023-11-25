@@ -333,8 +333,22 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             }
         }
 
+        // Calculate sound volume in dB
+        val rms = calculateRMS(audioDataDouble)
+        val volumeInDB = 20 * log10(rms)
+        print(volumeInDB)
+
         // Calculate pitch in Hz
         return sampleRate.toDouble() / pitchPeriod.toDouble()
+    }
+
+    private fun calculateRMS(audioData: DoubleArray): Double {
+        var sum = 0.0
+        for (value in audioData) {
+            sum += value * value
+        }
+        val meanSquare = sum / audioData.size
+        return sqrt(meanSquare)
     }
 
     // a4Height - default 440Hz
