@@ -83,6 +83,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private var noteHeights = ArrayList<Float>()
     private var randomCounter = 0
 
+    private var isEditing = false
+
     init {
         paint.color = Color.YELLOW
         paint.style = Paint.Style.FILL
@@ -128,6 +130,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             audioData = ShortArray(bufferSize)
             audioRecord.startRecording()
         }
+
         override fun run() {
             while (isRecording) {
                 val buffer = ShortArray(bufferSize)
@@ -144,6 +147,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             isRecording = false
             audioRecord.stop()
             audioRecord.release()
+            convertRecordingToNotes()
             invalidate()
         }
     }
@@ -194,6 +198,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
         isRecording = false
         randomCounter = 0
+
+        isEditing = false
 
         rectFArrayListInicialization()
 
@@ -290,215 +296,59 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
     }
 
-    // Napiš mi funkci na PWPD Algoritmus
-    // Výsledkem bude výška tónu v hertzích
-    private fun getPitchPWPD(audioData: ShortArray, sampleRate: Int): Double {
-        val numSamples = audioData.size
-        val audioDataDouble = DoubleArray(numSamples)
-
-        // Convert audio samples to array of doubles between -1 and 1
-        for (i in 0 until numSamples) {
-            audioDataDouble[i] = audioData[i] / 32768.0 // 32768.0 is the maximum value of a signed 16-bit integer
+    public fun changeEditingMode() {
+        isEditing = !isEditing
+        if (!isEditing) {
+            selectedNotes.clear()
         }
 
-        // Apply FFT to get frequency spectrum
-        val fft = DoubleFFT_1D(numSamples.toLong())
-        fft.realForward(audioDataDouble)
-
-        // Calculate magnitude spectrum
-        val magnitudeSpectrum = DoubleArray(numSamples / 2)
-        for (i in 0 until numSamples / 2) {
-            val real = audioDataDouble[2 * i]
-            val imag = audioDataDouble[2 * i + 1]
-            magnitudeSpectrum[i] = sqrt(real * real + imag * imag)
-        }
-
-        // Apply Harmonic Product Spectrum method
-        val maxHarmonics = 5
-        val hps = DoubleArray(numSamples / (2 * maxHarmonics))
-        for (i in 0 until hps.size) {
-            hps[i] = magnitudeSpectrum[i]
-            for (j in 2..maxHarmonics) {
-                if (i * j < magnitudeSpectrum.size) {
-                    hps[i] *= magnitudeSpectrum[i * j]
-                } else {
-                    hps[i] = 0.0
-                    break
-                }
-            }
-        }
-
-        // Find the peak in the HPS array
-        var maxHps = hps.maxOrNull() ?: 0.0
-        var maxHpsIndex = hps.toList().indexOf(maxHps)
-
-        // Calculate pitch in Hz
-        return sampleRate.toDouble() * maxHpsIndex / numSamples
-    }
-
-    private fun getPitchMLE(audioData: ShortArray, sampleRate: Int): Double {
-        val numSamples = audioData.size
-        val audioDataDouble = DoubleArray(numSamples)
-
-        // Convert audio samples to array of doubles between -1 and 1
-        for (i in 0 until numSamples) {
-            audioDataDouble[i] = audioData[i] / 32768.0 // 32768.0 is the maximum value of a signed 16-bit integer
-        }
-
-        // Apply FFT to get frequency spectrum
-        val fft = DoubleFFT_1D(numSamples.toLong())
-        fft.realForward(audioDataDouble)
-
-        // Calculate magnitude spectrum
-        val magnitudeSpectrum = DoubleArray(numSamples / 2)
-        for (i in 0 until numSamples / 2) {
-            val real = audioDataDouble[2 * i]
-            val imag = audioDataDouble[2 * i + 1]
-            magnitudeSpectrum[i] = sqrt(real * real + imag * imag)
-        }
-
-        // Apply Harmonic Product Spectrum method
-        val maxHarmonics = 5
-        val hps = DoubleArray(numSamples / (2 * maxHarmonics))
-        for (i in 0 until hps.size) {
-            hps[i] = magnitudeSpectrum[i]
-            for (j in 2..maxHarmonics) {
-                if (i * j < magnitudeSpectrum.size) {
-                    hps[i] *= magnitudeSpectrum[i * j]
-                } else {
-                    hps[i] = 0.0
-                    break
-                }
-            }
-        }
-
-        // Find the peak in the HPS array
-        var maxHps = hps.maxOrNull() ?: 0.0
-        var maxHpsIndex = hps.toList().indexOf(maxHps)
-
-        // Calculate pitch in Hz
-        return sampleRate.toDouble() * maxHpsIndex / numSamples
-    }
-
-    private fun getPitch(audioData: ShortArray, sampleRate: Int): Double {
-        val numSamples = audioData.size
-        val audioDataDouble = DoubleArray(numSamples)
-
-        // Convert audio samples to array of doubles between -1 and 1
-        for (i in 0 until numSamples) {
-            audioDataDouble[i] = audioData[i] / 32768.0 // 32768.0 is the maximum value of a signed 16-bit integer
-        }
-
-        // Apply FFT to get frequency spectrum
-        val fft = DoubleFFT_1D(numSamples.toLong())
-        fft.realForward(audioDataDouble)
-
-        // Calculate magnitude spectrum
-        val magnitudeSpectrum = DoubleArray(numSamples / 2)
-        for (i in 0 until numSamples / 2) {
-            val real = audioDataDouble[2 * i]
-            val imag = audioDataDouble[2 * i + 1]
-            magnitudeSpectrum[i] = sqrt(real * real + imag * imag)
-        }
-
-        // Apply Harmonic Product Spectrum method
-        val maxHarmonics = 5
-        val hps = DoubleArray(numSamples / (2 * maxHarmonics))
-        for (i in 0 until hps.size) {
-            hps[i] = magnitudeSpectrum[i]
-            for (j in 2..maxHarmonics) {
-                if (i * j < magnitudeSpectrum.size) {
-                    hps[i] *= magnitudeSpectrum[i * j]
-                } else {
-                    hps[i] = 0.0
-                    break
-                }
-            }
-        }
-
-        // Find the peak in the HPS array
-        var maxHps = hps.maxOrNull() ?: 0.0
-        var maxHpsIndex = hps.toList().indexOf(maxHps)
-
-        // Calculate pitch in Hz
-        return sampleRate.toDouble() * maxHpsIndex / numSamples
+        invalidate()
     }
 
     private fun getAutocorrelationPitch(audioData: ShortArray, sampleRate: Int): Double {
-        if (true) {
-            val numSamples = audioData.size
-            val audioDataDouble = DoubleArray(numSamples)
+        val numSamples = audioData.size
+        val audioDataDouble = DoubleArray(numSamples)
 
-            // Convert audio samples to array of doubles between -1 and 1
-            for (i in 0 until numSamples) {
-                audioDataDouble[i] =
-                    audioData[i] / 32768.0 // 32768.0 is the maximum value of a signed 16-bit integer
-            }
-
-            // Apply FFT to get frequency spectrum
-            val fft = DoubleFFT_1D(numSamples.toLong())
-            fft.realForward(audioDataDouble)
-
-            // Calculate magnitude spectrum
-            val magnitudeSpectrum = DoubleArray(numSamples / 2)
-            for (i in 0 until numSamples / 2) {
-                val real = audioDataDouble[2 * i]
-                val imag = audioDataDouble[2 * i + 1]
-                magnitudeSpectrum[i] = sqrt(real * real + imag * imag)
-            }
-
-            // Apply Harmonic Product Spectrum method
-            val maxHarmonics = 5
-            val hps = DoubleArray(numSamples / (2 * maxHarmonics))
-            for (i in 0 until hps.size) {
-                hps[i] = magnitudeSpectrum[i]
-                for (j in 2..maxHarmonics) {
-                    if (i * j < magnitudeSpectrum.size) {
-                        hps[i] *= magnitudeSpectrum[i * j]
-                    } else {
-                        hps[i] = 0.0
-                        break
-                    }
-                }
-            }
-
-            // Find the peak in the HPS array
-            var maxHps = hps.maxOrNull() ?: 0.0
-            var maxHpsIndex = hps.toList().indexOf(maxHps)
-
-            // Calculate pitch in Hz
-            return sampleRate.toDouble() * maxHpsIndex / numSamples
-        } else {
-            val numSamples = audioData.size
-            val audioDataDouble = DoubleArray(numSamples)
-
-            // Convert audio samples to array of doubles between -1 and 1
-            for (i in 0 until numSamples) {
-                audioDataDouble[i] = audioData[i] / 32768.0 // 32768.0 is the maximum value of a signed 16-bit integer
-            }
-
-            val minPeriod = (sampleRate / 2000) // Minimum period for pitch detection (e.g., 1000 Hz)
-            val maxPeriod = (sampleRate / 80) // Maximum period for pitch detection (e.g., 200 Hz)
-
-            var pitchPeriod = 0
-            var maxCorrelation = 0.0
-
-            // Calculate autocorrelation for different pitch periods
-            for (period in minPeriod until maxPeriod) {
-                var correlation = 0.0
-                for (i in 0 until numSamples - period) {
-                    correlation += audioDataDouble[i] * audioDataDouble[i + period]
-                }
-
-                if (correlation > maxCorrelation) {
-                    maxCorrelation = correlation
-                    pitchPeriod = period
-                }
-            }
-
-            // Calculate pitch in Hz
-            return sampleRate.toDouble() / pitchPeriod.toDouble()
+        // Convert audio samples to array of doubles between -1 and 1
+        for (i in 0 until numSamples) {
+            audioDataDouble[i] = audioData[i] / 32768.0 // 32768.0 is the maximum value of a signed 16-bit integer
         }
+
+        val minPeriod = (sampleRate / 2000) // Minimum period for pitch detection (e.g., 1000 Hz)
+        val maxPeriod = (sampleRate / 80) // Maximum period for pitch detection (e.g., 200 Hz)
+
+        var pitchPeriod = 0
+        var maxCorrelation = 0.0
+
+        // Calculate autocorrelation for different pitch periods
+        for (period in minPeriod until maxPeriod) {
+            var correlation = 0.0
+            for (i in 0 until numSamples - period) {
+                correlation += audioDataDouble[i] * audioDataDouble[i + period]
+            }
+
+            if (correlation > maxCorrelation) {
+                maxCorrelation = correlation
+                pitchPeriod = period
+            }
+        }
+
+        // Calculate sound volume in dB
+        val rms = calculateRMS(audioDataDouble)
+        val volumeInDB = 20 * log10(rms)
+        print(volumeInDB)
+
+        // Calculate pitch in Hz
+        return sampleRate.toDouble() / pitchPeriod.toDouble()
+    }
+
+    private fun calculateRMS(audioData: DoubleArray): Double {
+        var sum = 0.0
+        for (value in audioData) {
+            sum += value * value
+        }
+        val meanSquare = sum / audioData.size
+        return sqrt(meanSquare)
     }
 
     // a4Height - default 440Hz
@@ -509,23 +359,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         }
 
         noteHeights = noteArray
-    }
-
-    // height in Hz
-    private fun closestNote(height: Float): Int {
-        var note = 0
-        for (i in 1 until 128) {
-            if (height < noteHeights[i]) {
-                note = i - 1
-                break
-            }
-        }
-
-        if (height - noteHeights[note] > noteHeights[note + 1] - height) {
-            note++
-        }
-
-        return note
     }
 
     private fun lockCanvas(): Canvas {
@@ -582,6 +415,63 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
                 }
             }
         }
+    }
+
+    private fun convertRecordingToNotes() {
+        var recordedNotes = ArrayList<Int>()
+        var newNotes = ArrayList<Note>()
+        recordingLineAutocorrelation.forEach {
+            recordedNotes.add(closestNote(it.toFloat()))
+        }
+
+        var lastNote = 0
+        var startOfTheLastNote = 0
+        recordedNotes.forEachIndexed { i, note ->
+            if (i != 0) {
+                if (lastNote != note) {
+                    val pitch = note.toByte()
+                    val start = startOfTheLastNote
+                    val duration = recordingLineTime[i].toInt() - startOfTheLastNote
+                    val rectF = getRectFromNoteInfo(pitch, start,duration)
+                    newNotes.add(Note(pitch, start, duration, rectF))
+                    lastNote = note
+                    startOfTheLastNote = recordingLineTime[i].toInt()
+                }
+            } else {
+                lastNote = note
+                startOfTheLastNote = recordingLineTime[i].toInt()
+            }
+        }
+
+        val pitch = lastNote.toByte()
+        val start = startOfTheLastNote
+        val duration = recordingLineTime.last().toInt() - startOfTheLastNote
+        val rectF = getRectFromNoteInfo(pitch, start,duration)
+        newNotes.add(Note(pitch, start, duration, rectF))
+
+        newNotes.forEach {
+            notes.add(it)
+        }
+
+        recordingLineTime.clear()
+        recordingLineAutocorrelation.clear()
+    }
+
+    // height in Hz
+    private fun closestNote(height: Float): Int {
+        var note = 0
+        for (i in 1 until 128) {
+            if (height < noteHeights[i]) {
+                note = i - 1
+                break
+            }
+        }
+
+        if (height - noteHeights[note] > noteHeights[note + 1] - height) {
+            note++
+        }
+
+        return note
     }
 
     private fun resetTime() {
@@ -968,7 +858,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         return RectF(left, top, right, bottom)
     }
 
-    private fun onSingleTapUpEvent(eventX: Float, eventY: Float) {
+    private fun buttonsOnSingleTapUpEvent(eventX: Float, eventY: Float) {
         // buttons[0] - play button
         // buttons[1] - recording button
         // buttons[2] - stop button
@@ -1006,6 +896,24 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
                 recordThread?.stopRecording()
                 recordThread = null
             }
+        }
+    }
+
+    private fun onSingleTapUpEvent(eventX: Float, eventY: Float) {
+        if (isEditing) {
+            notes.forEach {
+                if (it.rectF.contains(eventX, eventY)) {
+                    if (selectedNotes.contains(it)) {
+                        selectedNotes.remove(it)
+                    } else {
+                        selectedNotes.add(it)
+                        midiPlayer.playNote(it.pitch)
+                        midiPlayer.stopNote(it.pitch)
+                    }
+                }
+            }
+        } else {
+            buttonsOnSingleTapUpEvent(eventX, eventY)
         }
     }
 
@@ -1206,8 +1114,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         var rectF = getRectFromNoteInfo(60, 0, 480)
         var note = Note(60, 0,480, rectF)
         notes.add(note)
-
-        selectedNotes.add(note)
 
         rectF = getRectFromNoteInfo(64, 240,480)
         note = Note(64, 240,960, rectF)
