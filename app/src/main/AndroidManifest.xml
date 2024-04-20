@@ -46,6 +46,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".SettingsActivity"
+            android:label="SettingsActivity"
+            android:exported="true"
+            android:theme="@style/Theme.DiplomovaPrace.NoActionBar">
+        </activity>
+        <activity android:name=".SavedFilesActivity"
+            android:label="SavedFilesActivity"
+            android:exported="true"
+            android:theme="@style/Theme.DiplomovaPrace.NoActionBar">
+        </activity>
     </application>
 
 </manifest>
