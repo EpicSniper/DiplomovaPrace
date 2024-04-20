@@ -1168,7 +1168,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         return true
     }
 
-    override fun onScroll(event1: MotionEvent, event2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
+    override fun onScroll(event1: MotionEvent?, event2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
         /*println("------- ON SCROLL -------")
         println("DOWN - X: " + event1.x + " |Y: " + event1.y)
         println("DOWN - X: " + event2.x + " |Y: " + event2.y)
@@ -1178,7 +1178,9 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             scrollY += distanceY / scaleFactorY
         }
 
-        onScrollingEvent(event1.x, event1.y, event2.x, event2.y)
+        if (event1 != null) {
+            onScrollingEvent(event1.x, event1.y, event2.x, event2.y)
+        }
         return true
     }
 
@@ -1187,7 +1189,12 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         println("X: " + event.x + " |Y: " + event.y)*/
     }
 
-    override fun onFling(eventDown: MotionEvent, eventUp: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
+    override fun onFling(
+        p0: MotionEvent?,
+        eventDown: MotionEvent,
+        velocityX: Float,
+        velocityY: Float
+    ): Boolean {
         /*println("------- ON FLING -------")
         println("DOWN - X: " + eventDown.x + " |Y: " + eventDown.y)
         println("UP - X: " + eventUp.x + " |Y: " + eventUp.y)

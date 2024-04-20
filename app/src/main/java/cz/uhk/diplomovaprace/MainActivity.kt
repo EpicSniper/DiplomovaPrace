@@ -3,10 +3,9 @@ package cz.uhk.diplomovaprace
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 
-class SettingsActivity : AppCompatActivity() {
-
+class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_settings)
+        setContentView(R.layout.activity_main) // Nastavte layout MainActivity
     }
 }

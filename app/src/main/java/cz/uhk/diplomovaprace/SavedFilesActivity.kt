@@ -6,6 +6,6 @@ import androidx.appcompat.app.AppCompatActivity
 class SavedFilesActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
-            setContentView(R.layout.activity_saved_files)
+            setContentView(R.layout.fragment_saved_files)
     }
 }

@@ -3,11 +3,21 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/PianoRollFragment">
+    app:startDestination="@id/mainMenuFragment">
 
     <fragment
-        android:id="@+id/PianoRollFragment"
-        android:name="cz.uhk.diplomovaprace.PianoRollFragment"
-        android:label="@string/piano_fragment_label"
-        tools:layout="@layout/fragment_piano_roll"/>
+        android:id="@+id/mainMenuFragment"
+        android:name="cz.uhk.diplomovaprace.MainMenuFragment"
+        android:label="fragment_main_menu"
+        tools:layout="@layout/fragment_main_menu" >
+        <action
+            android:id="@+id/action_mainMenuFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="cz.uhk.diplomovaprace.SettingsFragment"
+        android:label="fragment_settings"
+        tools:layout="@layout/fragment_settings" />
 </navigation>

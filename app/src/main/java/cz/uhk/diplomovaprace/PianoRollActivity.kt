@@ -33,8 +33,8 @@ class PianoRollActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
-        appBarConfiguration = AppBarConfiguration(navController.graph)
+        //val navController = findNavController(R.id.nav_host_fragment_content_main)
+        //appBarConfiguration = AppBarConfiguration(navController.graph)
 
         // TODO: another permissions
         pianoRollView = findViewById(R.id.piano_roll_view)
