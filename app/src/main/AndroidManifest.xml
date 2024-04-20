@@ -8,7 +8,7 @@
         tools:ignore="ProtectedPermissions" />
 
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.Media.createWriteRequest" />
 
 
     <uses-feature
@@ -22,17 +22,27 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/Theme.DiplomovaPrace"
+        android:theme="@style/Theme.DiplomovaPrace.NoActionBar"
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
-            android:name=".MainActivity"
+            android:name=".PianoRollActivity"
             android:exported="true"
             android:label="@string/title_activity_main"
             android:theme="@style/Theme.DiplomovaPrace.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".MainMenuActivity"
+            android:exported="true"
+            android:label="MainMenuActivity"
+            android:theme="@style/Theme.DiplomovaPrace.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

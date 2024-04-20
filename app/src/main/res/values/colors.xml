@@ -1,10 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
+    <!-- Keys -->
+    <color name="lightKey">#FFE6E6E6</color>
+    <color name="darkKey">#FF4D4D4D</color>
+    <color name="lightKeyFont">#FF4D4D4D</color>
+    <color name="darkKeyFont">#FFB3B3B3</color>
+
+    <!-- Key frame -->
+    <color name="keyframe">#FF525C8E</color>
+
+    <!-- Text and colors -->
+    <color name="text1">#FFD7E0FF</color>
+    <color name="text2">#FF525C8E</color>
+    <color name="background">#FFA0ADEF</color>
+
+    <!-- Other colors -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 </resources>

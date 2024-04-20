@@ -282,7 +282,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         midiCreator.addTrack(track)
         var midiData = midiCreator.createMidiData(context,4,4, tempo)
 
-        setHertzToNotes(440f)
+        setHertzToNotes(442f)
         onCreateTestFunction()
         canvas.restore()
         unlockCanvas(canvas)
@@ -440,7 +440,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     private fun getAutocorrelationPitch(audioData: ShortArray, sampleRate: Int): Double {
-        if (true) {
+        if (false) {
             val numSamples = audioData.size
             val audioDataDouble = DoubleArray(numSamples)
 
