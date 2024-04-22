@@ -13,11 +13,13 @@ import android.media.MediaRecorder
 import android.util.AttributeSet
 import android.view.*
 import android.view.GestureDetector.OnGestureListener
+import androidx.core.content.ContextCompat
 import cz.uhk.diplomovaprace.PianoRoll.Midi.MidiCreator
 import cz.uhk.diplomovaprace.PianoRoll.Midi.MidiFactory
 import cz.uhk.diplomovaprace.PianoRoll.Midi.MidiPlayer
 import cz.uhk.diplomovaprace.PianoRoll.Midi.Track
 import cz.uhk.diplomovaprace.PianoRoll.Note
+import cz.uhk.diplomovaprace.R
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -525,7 +527,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         return sqrt(meanSquare)
     }
 
-    // a4Height - default 440Hz
+    // a4Height - default 442Hz
     private fun setHertzToNotes(a4Height: Float) {
         var noteArray = ArrayList<Float>()
         for (i in 0 until 128) {
@@ -654,7 +656,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
     private fun drawTimelineAndPiano(canvas: Canvas)  {
         // draw timeline
-        paint.color = Color.parseColor("#333333")   // TODO: barvy
+        paint.color = ContextCompat.getColor(context, R.color.pianorollframe)   // TODO: barvy
         var left = scrollX + widthDifference / 2f
         var right = scrollX + width - (widthDifference / 2f)
         var top = scrollY + heightDifference / 2f
@@ -667,8 +669,10 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         var sixteenthLengths = 0
         var actualTime = firstBar
         var topOfTheLine = top
-        var upperColor = Color.parseColor("#ffffff")        // TODO: vsechny barvy
-        var bottomColor = Color.parseColor("#222222")
+        var upperColor = ContextCompat.getColor(context, R.color.pinkie)        // TODO: vsechny barvy
+        var bottomColor = ContextCompat.getColor(context, R.color.pianorollline)
+        val upperLineThickness = 2f
+        val bottomLineThickness = 1f
 
         paint.textScaleX = scaleFactorY / scaleFactorX
         var barNumberCorrection = 1 - (pianoKeyWidth / barLength).toInt()
@@ -678,8 +682,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             when (sixteenthLengths % 16) {
                 0 -> {
                     topOfTheLine = top
-                    upperColor = Color.parseColor("#ffffff")
-                    bottomColor = Color.parseColor("#222222")
+                    upperColor = ContextCompat.getColor(context, R.color.text1)
+                    bottomColor = ContextCompat.getColor(context, R.color.pianorollline)
                     paint.textSize = timelineHeight / 4f
                     paint.color = upperColor
                     canvas.drawText(((actualTime / barLength).toInt() + barNumberCorrection).toString(), actualTime + 5, top + timelineHeight / 4f, paint)
@@ -688,8 +692,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
                 1, 3, 5, 7, 9, 11, 13, 15 -> {
                     if (scaleFactorX > 0.32f) {
                         topOfTheLine = top + (timelineHeight / 16f * 12f )
-                        upperColor = Color.parseColor("#bbbbbb")
-                        bottomColor = Color.parseColor("#666666")
+                        upperColor = ContextCompat.getColor(context, R.color.text1)
+                        bottomColor = ContextCompat.getColor(context, R.color.pianorollline)
                     } else {
                         renderLines = false
                     }
@@ -698,8 +702,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
                 2, 6, 10, 14 -> {
                     if (scaleFactorX > 0.16f) {
                         topOfTheLine = top + (timelineHeight / 16f * 11f )
-                        upperColor = Color.parseColor("#cccccc")
-                        bottomColor = Color.parseColor("#555555")
+                        upperColor = ContextCompat.getColor(context, R.color.text1)
+                        bottomColor = ContextCompat.getColor(context, R.color.pianorollline)
                     } else {
                         renderLines = false
                     }
@@ -708,8 +712,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
                 4, 12 -> {
                     if (scaleFactorX > 0.08f) {
                         topOfTheLine = top + (timelineHeight / 16f * 10f )
-                        upperColor = Color.parseColor("#dddddd")
-                        bottomColor = Color.parseColor("#444444")
+                        upperColor = ContextCompat.getColor(context, R.color.text1)
+                        bottomColor = ContextCompat.getColor(context, R.color.pianorollline)
                     } else {
                         renderLines = false
                     }
@@ -719,8 +723,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
                 8 -> {
                     if (scaleFactorX > 0.04f) {
                         topOfTheLine = top + (timelineHeight / 16f * 8f )
-                        upperColor = Color.parseColor("#eeeeee")
-                        bottomColor = Color.parseColor("#333333")
+                        upperColor = ContextCompat.getColor(context, R.color.text1)
+                        bottomColor = ContextCompat.getColor(context, R.color.pianorollline)
                     } else {
                         renderLines = false
                     }
@@ -729,7 +733,9 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
             if (renderLines) {
                 paint.color = upperColor
+                paint.strokeWidth = upperLineThickness
                 canvas.drawLine(actualTime, topOfTheLine, actualTime, bottom, paint)
+                paint.strokeWidth = bottomLineThickness
                 paint.color = bottomColor
                 canvas.drawLine(actualTime, bottom, actualTime, height.toFloat(), paint)
             }
@@ -747,20 +753,26 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         drawPiano(canvas)
 
         // draw clear area
-        paint.color = Color.parseColor("#333333")
+        paint.color = ContextCompat.getColor(context, R.color.pianorollframe)
         right = pianoKeyWidth + left
         canvas.drawRect(left, top, right, bottom, paint)
-
-        // test draw
     }
 
     private fun drawGrid(canvas: Canvas) {
         val border = pianoKeyHeight / 20f
 
-        val blackPianoKey = Color.parseColor("#444444")     // TODO: colors
-        val whitePianoKey = Color.parseColor("#CCCCCC")
+        val blackPianoKey = ContextCompat.getColor(context, R.color.background2)
+        val whitePianoKey = ContextCompat.getColor(context, R.color.background)
+        val darkBorderColor = ContextCompat.getColor(context, R.color.pianorollframe)
+        val lightBorderColor = ContextCompat.getColor(context, R.color.text1)
+        val middleBorderColor = ContextCompat.getColor(context, R.color.pianorollline)
+        val pinkieBorderColor = ContextCompat.getColor(context, R.color.pinkie)
         val left = scrollX + widthDifference / 2f
         val right = left + width / scaleFactorX
+
+        var upperBorderColor = darkBorderColor
+        var bottomBorderColor = lightBorderColor
+        var keyColor = whitePianoKey
 
         for (i in 0 until 128) {
             // Vykresleni vnejsi casti
@@ -770,22 +782,85 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             var key = i % 12
 
             when (key) {
-                0, 2, 4, 5, 7, 9, 11 -> paint.color = whitePianoKey
-                1, 3, 6, 8, 10 -> paint.color = blackPianoKey
+                0 -> {
+                    keyColor = whitePianoKey
+                    upperBorderColor = darkBorderColor
+                    bottomBorderColor = pinkieBorderColor
+                }
+
+                1 -> {
+                    keyColor = blackPianoKey
+                    upperBorderColor = lightBorderColor
+                    bottomBorderColor = darkBorderColor
+                }
+
+                2 -> {
+                    keyColor = whitePianoKey
+                    upperBorderColor = darkBorderColor
+                    bottomBorderColor = lightBorderColor
+                }
+
+                3 -> {
+                    keyColor = blackPianoKey
+                    upperBorderColor = lightBorderColor
+                    bottomBorderColor = darkBorderColor
+                }
+
+                4 -> {
+                    keyColor = whitePianoKey
+                    upperBorderColor = middleBorderColor
+                    bottomBorderColor = lightBorderColor
+                }
+
+                5 -> {
+                    keyColor = whitePianoKey
+                    upperBorderColor = darkBorderColor
+                    bottomBorderColor = middleBorderColor
+                }
+
+                6 -> {
+                    keyColor = blackPianoKey
+                    upperBorderColor = lightBorderColor
+                    bottomBorderColor = darkBorderColor
+                }
+
+                7 -> {
+                    keyColor = whitePianoKey
+                    upperBorderColor = darkBorderColor
+                    bottomBorderColor = lightBorderColor
+                }
+
+                8 -> {
+                    keyColor = blackPianoKey
+                    upperBorderColor = lightBorderColor
+                    bottomBorderColor = darkBorderColor
+                }
+
+                9 -> {
+                    keyColor = whitePianoKey
+                    upperBorderColor = darkBorderColor
+                    bottomBorderColor = lightBorderColor
+                }
+
+                10 -> {
+                    keyColor = blackPianoKey
+                    upperBorderColor = lightBorderColor
+                    bottomBorderColor = darkBorderColor
+                }
+
+                11 -> {
+                    keyColor = whitePianoKey
+                    upperBorderColor = pinkieBorderColor
+                    bottomBorderColor = lightBorderColor
+                }
             }
 
+            paint.color = keyColor
             canvas.drawRect(left, top, right, bottom, paint)
-            when (key) {
-                0, 5 -> {
-                    paint.color = Color.GRAY
-                    canvas.drawRect(left, bottom - border, right, bottom, paint)
-                }
-
-                4, 11 -> {
-                    paint.color = Color.GRAY
-                    canvas.drawRect(left, top, right, top + border, paint)
-                }
-            }
+            paint.color = upperBorderColor
+            canvas.drawRect(left, top, right, top + border, paint)
+            paint.color = bottomBorderColor
+            canvas.drawRect(left, bottom - border, right, bottom, paint)
         }
     }
 
@@ -944,11 +1019,23 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         // Draw piano keys
         val border = pianoKeyHeight / 20f
 
-        val blackPianoKey = Color.BLACK
-        val whitePianoKey = Color.WHITE
+        val blackPianoKey = ContextCompat.getColor(context, R.color.darkKey)
+        val whitePianoKey = ContextCompat.getColor(context, R.color.lightKey)
+        val blackKeyText = ContextCompat.getColor(context, R.color.darkKeyFont)
+        val whiteKeyText = ContextCompat.getColor(context, R.color.lightKeyFont)
+        val darkBorderColor = ContextCompat.getColor(context, R.color.pianorollframe)
+        val lightBorderColor = ContextCompat.getColor(context, R.color.text1)
+        val middleBorderColor = ContextCompat.getColor(context, R.color.pianorollline)
+        val pinkieBorderColor = ContextCompat.getColor(context, R.color.pinkie)
 
         val left = scrollX + widthDifference / 2f
         val right = pianoKeyWidth + left
+
+        var keyColor = whitePianoKey
+        var textColor = whiteKeyText
+        var keyText = "C"
+        var upperBorderColor = darkBorderColor
+        var bottomBorderColor = lightBorderColor
 
         pianoKeys.forEachIndexed { i, it ->
             it.left = left
@@ -956,34 +1043,125 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             it.bottom = height - (i * pianoKeyHeight)
             it.top = it.bottom - pianoKeyHeight
 
-            var key = i % 12
-            when (key) {
-                0, 2, 4, 5, 7, 9, 11 -> paint.color = whitePianoKey
-                1, 3, 6, 8, 10 -> paint.color = blackPianoKey
-            }
+            val key = i % 12
+            val scaleNumber = (i / 12) - 2
 
-            canvas.drawRect(it, paint)
             when (key) {
                 0 -> {
-                    paint.color = Color.GRAY
-                    canvas.drawRect(it.left, it.bottom - border, it.right, it.bottom, paint)
+                    keyColor = whitePianoKey
+                    textColor = whiteKeyText
+                    keyText = "C"
+                    upperBorderColor = darkBorderColor
+                    bottomBorderColor = pinkieBorderColor
+                }
 
-                    val scaleNumber = (i / 12) - 2
-                    paint.textSize = pianoKeyHeight * 0.6f
-                    paint.color = Color.DKGRAY
-                    canvas.drawText("C$scaleNumber", it.left + 2f, it.bottom - pianoKeyHeight * 0.15f, paint)
+                1 -> {
+                    keyColor = blackPianoKey
+                    textColor = blackKeyText
+                    keyText = "C#"
+                    upperBorderColor = lightBorderColor
+                    bottomBorderColor = darkBorderColor
+                }
+
+                2 -> {
+                    keyColor = whitePianoKey
+                    textColor = whiteKeyText
+                    keyText = "D"
+                    upperBorderColor = darkBorderColor
+                    bottomBorderColor = lightBorderColor
+                }
+
+                3 -> {
+                    keyColor = blackPianoKey
+                    textColor = blackKeyText
+                    keyText = "D#"
+                    upperBorderColor = lightBorderColor
+                    bottomBorderColor = darkBorderColor
+                }
+
+                4 -> {
+                    keyColor = whitePianoKey
+                    textColor = whiteKeyText
+                    keyText = "E"
+                    upperBorderColor = middleBorderColor
+                    bottomBorderColor = lightBorderColor
                 }
 
                 5 -> {
-                    paint.color = Color.GRAY
-                    canvas.drawRect(it.left, it.bottom - border, it.right, it.bottom, paint)
+                    keyColor = whitePianoKey
+                    textColor = whiteKeyText
+                    keyText = "F"
+                    upperBorderColor = darkBorderColor
+                    bottomBorderColor = middleBorderColor
                 }
 
-                4, 11 -> {
-                    paint.color = Color.GRAY
-                    canvas.drawRect(it.left, it.top, it.right, it.top + border, paint)
+                6 -> {
+                    keyColor = blackPianoKey
+                    textColor = blackKeyText
+                    keyText = "F#"
+                    upperBorderColor = lightBorderColor
+                    bottomBorderColor = darkBorderColor
+                }
+
+                7 -> {
+                    keyColor = whitePianoKey
+                    textColor = whiteKeyText
+                    keyText = "G"
+                    upperBorderColor = darkBorderColor
+                    bottomBorderColor = lightBorderColor
+                }
+
+                8 -> {
+                    keyColor = blackPianoKey
+                    textColor = blackKeyText
+                    keyText = "G#"
+                    upperBorderColor = lightBorderColor
+                    bottomBorderColor = darkBorderColor
+                }
+
+                9 -> {
+                    keyColor = whitePianoKey
+                    textColor = whiteKeyText
+                    keyText = "A"
+                    upperBorderColor = darkBorderColor
+                    bottomBorderColor = lightBorderColor
+                }
+
+                10 -> {
+                    keyColor = blackPianoKey
+                    textColor = blackKeyText
+                    keyText = "A#"
+                    upperBorderColor = lightBorderColor
+                    bottomBorderColor = darkBorderColor
+                }
+
+                11 -> {
+                    keyColor = whitePianoKey
+                    textColor = whiteKeyText
+                    keyText = "B"
+                    upperBorderColor = pinkieBorderColor
+                    bottomBorderColor = lightBorderColor
                 }
             }
+
+            // draw piano key
+            paint.color = keyColor
+            val rect = RectF(it.left, it.top, it.right, it.bottom)
+            val cornerRadiusX = (it.bottom - it.top) / 5f
+            val cornerRadiusY = (it.right - it.left) / 5f
+            println(cornerRadiusY)
+            canvas.drawRoundRect(rect, cornerRadiusY, cornerRadiusX, paint)
+
+            // draw key text
+            paint.textSize = pianoKeyHeight * 0.6f
+            paint.color = textColor
+            canvas.drawText("$keyText$scaleNumber", it.left + 2f, it.bottom - pianoKeyHeight * 0.15f, paint)
+
+            // draw borders
+            paint.color = bottomBorderColor
+            canvas.drawRect(it.left, it.bottom - border, it.right, it.bottom, paint)
+            paint.color = upperBorderColor
+            canvas.drawRect(it.left, it.top, it.right, it.top + border, paint)
         }
     }
 

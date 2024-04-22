@@ -8,11 +8,15 @@
 
     <!-- Key frame -->
     <color name="keyframe">#FF525C8E</color>
+    <color name="pianorollframe">#FF525C8E</color>
+    <color name="pinkie">#FFFF9797</color>
+    <color name="pianorollline">#FF7587C9</color>
 
     <!-- Text and colors -->
     <color name="text1">#FFD7E0FF</color>
     <color name="text2">#FF525C8E</color>
     <color name="background">#FFA0ADEF</color>
+    <color name="background2">#FF838BC5</color>
 
     <!-- Other colors -->
     <color name="black">#FF000000</color>
