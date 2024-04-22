@@ -57,7 +57,7 @@
 
         </activity>
         <activity
-            android:name=".SavedFilesActivity"
+            android:name=".SavedFilesFragment"
             android:exported="true"
             android:label="SavedFilesActivity"
             android:theme="@style/Theme.DiplomovaPrace.NoActionBar">

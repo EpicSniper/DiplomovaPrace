@@ -13,11 +13,34 @@
         <action
             android:id="@+id/action_mainMenuFragment_to_settingsFragment"
             app:destination="@id/settingsFragment" />
+        <action
+            android:id="@+id/action_mainMenuFragment_to_savedFilesFragment"
+            app:destination="@id/savedFilesFragment" />
+        <action
+            android:id="@+id/action_mainMenuFragment_to_newRecording"
+            app:destination="@id/pianoRollFragment" />
     </fragment>
 
     <fragment
         android:id="@+id/settingsFragment"
         android:name="cz.uhk.diplomovaprace.SettingsFragment"
         android:label="fragment_settings"
-        tools:layout="@layout/fragment_settings" />
+        tools:layout="@layout/fragment_settings" >
+        <action
+            android:id="@+id/action_settingsFragment_to_mainMenuFragment"
+            app:destination="@id/mainMenuFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/savedFilesFragment"
+        android:name="cz.uhk.diplomovaprace.SavedFilesFragment"
+        android:label="SavedFilesFragment" >
+        <action
+            android:id="@+id/action_savedFilesFragment_to_mainMenuFragment"
+            app:destination="@id/mainMenuFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/pianoRollFragment"
+        android:name="cz.uhk.diplomovaprace.PianoRollFragment"
+        android:label="fragment_piano_roll"
+        tools:layout="@layout/fragment_piano_roll" />
 </navigation>

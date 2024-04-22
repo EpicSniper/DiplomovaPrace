@@ -77,7 +77,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private var currentTime = System.currentTimeMillis()
     private var midiPlayer = MidiPlayer()
 
-    private var isRecording = false                 // TODO: integrate recording function
+    private var isRecording = false
     private var recordingLineTime = ArrayList<Float>()
     private var recordingLineAutocorrelation = ArrayList<Double>()
     private var noteHeights = ArrayList<Float>()
