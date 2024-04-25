@@ -656,7 +656,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
     private fun drawTimelineAndPiano(canvas: Canvas)  {
         // draw timeline
-        paint.color = ContextCompat.getColor(context, R.color.pianorollframe)   // TODO: barvy
+        paint.color = ContextCompat.getColor(context, R.color.pianorollframe)
         var left = scrollX + widthDifference / 2f
         var right = scrollX + width - (widthDifference / 2f)
         var top = scrollY + heightDifference / 2f
@@ -669,7 +669,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         var sixteenthLengths = 0
         var actualTime = firstBar
         var topOfTheLine = top
-        var upperColor = ContextCompat.getColor(context, R.color.pinkie)        // TODO: vsechny barvy
+        var upperColor = ContextCompat.getColor(context, R.color.pinkie)
         var bottomColor = ContextCompat.getColor(context, R.color.pianorollline)
         val upperLineThickness = 2f
         val bottomLineThickness = 1f
@@ -992,7 +992,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
     private fun drawNotes(canvas: Canvas) {
         notes.forEach {
-            drawNote(canvas, it)        // TODO: barva noty
+            drawNote(canvas, it)
         }
     }
 
@@ -1001,18 +1001,19 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
         // Namalovat okraje
         var noteRectF = note.rectF
-        paint.color = Color.DKGRAY              // TODO: barvy
-        canvas.drawRect(noteRectF, paint)
 
-        paint.color = Color.BLUE
+        paint.color = ContextCompat.getColor(context, R.color.note)
         // Namalovat vnitrek
         selectedNotes.forEach {
             if (it == note) {
-                paint.color = Color.YELLOW
+                paint.color = ContextCompat.getColor(context, R.color.pinkie)
             }
         }
 
-        canvas.drawRect(noteRectF.left + border, noteRectF.top + border, noteRectF.right - border, noteRectF.bottom - border, paint)
+        noteRectF = RectF(noteRectF.left + border, noteRectF.top + border, noteRectF.right - border, noteRectF.bottom - border)
+        val cornerRadiusX = (noteRectF.bottom - noteRectF.top) / 4f
+        val cornerRadiusY = (noteRectF.bottom - noteRectF.top) * 2f / scaleFactorX
+        canvas.drawRoundRect(noteRectF, cornerRadiusY, cornerRadiusX, paint)
     }
 
     private fun drawPiano(canvas: Canvas) {
@@ -1149,7 +1150,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             val rect = RectF(it.left, it.top, it.right, it.bottom)
             val cornerRadiusX = (it.bottom - it.top) / 5f
             val cornerRadiusY = (it.right - it.left) / 5f
-            println(cornerRadiusY)
             canvas.drawRoundRect(rect, cornerRadiusY, cornerRadiusX, paint)
 
             // draw key text

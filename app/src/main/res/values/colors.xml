@@ -12,6 +12,10 @@
     <color name="pinkie">#FFFF9797</color>
     <color name="pianorollline">#FF7587C9</color>
 
+    <!-- Notes -->
+    <color name="note">#FF3A3A91</color>
+    <color name="selectedNote">#FF525C8E</color>
+
     <!-- Text and colors -->
     <color name="text1">#FFD7E0FF</color>
     <color name="text2">#FF525C8E</color>
