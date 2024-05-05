@@ -18,19 +18,13 @@ import cz.uhk.diplomovaprace.PianoRoll.Midi.MidiCreator
 import cz.uhk.diplomovaprace.PianoRoll.Midi.MidiFactory
 import cz.uhk.diplomovaprace.PianoRoll.Midi.MidiPlayer
 import cz.uhk.diplomovaprace.PianoRoll.Midi.Track
-import cz.uhk.diplomovaprace.PianoRoll.Note
 import cz.uhk.diplomovaprace.R
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.apache.commons.math3.transform.DftNormalization
-import org.apache.commons.math3.transform.FastFourierTransformer
-import org.apache.commons.math3.transform.TransformType
 import org.jtransforms.fft.DoubleFFT_1D
 import kotlin.math.*
-import kotlin.math.log10
 import kotlin.math.pow
-import kotlin.math.log2
 
 class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(context, attrs),
     SurfaceHolder.Callback, OnGestureListener, ScaleGestureDetector.OnScaleGestureListener {
@@ -51,8 +45,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
     private var scrollX = 0f
     private var scrollY = 0f
-    private var scaleFactorX = 1f
-    private var scaleFactorY = 1f
+    private var scaleFactorX = 0.2f
+    private var scaleFactorY = 2.5f
     private var scaling = false
     private var scalingX = false
     private var scalingY = false
@@ -65,6 +59,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private var timelineHeight = height / 20f
     private var pianoKeyWidth = width / 16f
     private var pianoKeyHeight = (height - timelineHeight) / 128f
+    private var pianoKeyBorder = pianoKeyHeight / 20f
 
     private var barTimeSignature = 4 / 4f
     private var beatLength = 480
@@ -173,8 +168,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         // Promenne pro prvotni zobrazeni
         scrollX = 0f
         scrollY = 0f
-        scaleFactorX = 1f
-        scaleFactorY = 1f
+        scaleFactorX = 0.2f
+        scaleFactorY = 2.5f
 
         // Ostatni promenne
         scaling = false
@@ -185,6 +180,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         timelineHeight = height / 20f / scaleFactorY            // TODO: Aby uzivatel tuto promennou mohl menit?
         pianoKeyWidth = width / 7f / scaleFactorX               // TODO: Aby uzivatel tuto promennou mohl menit?
         pianoKeyHeight = (height - timelineHeight) / 128f
+        pianoKeyBorder = pianoKeyHeight / 20f
 
         barTimeSignature = 4 / 4f
         beatLength = 480
@@ -550,8 +546,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             scaleFactorX = 0.01f
         }
 
-        if (scaleFactorY < 1f) {
-            scaleFactorY = 1f
+        if (scaleFactorY < 2.5f) {
+            scaleFactorY = 2.5f
         } else if (scaleFactorY > 10f) {
             scaleFactorY = 10f
         }
@@ -759,8 +755,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     private fun drawGrid(canvas: Canvas) {
-        val border = pianoKeyHeight / 20f
-
         val blackPianoKey = ContextCompat.getColor(context, R.color.background2)
         val whitePianoKey = ContextCompat.getColor(context, R.color.background)
         val darkBorderColor = ContextCompat.getColor(context, R.color.pianorollframe)
@@ -858,9 +852,9 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             paint.color = keyColor
             canvas.drawRect(left, top, right, bottom, paint)
             paint.color = upperBorderColor
-            canvas.drawRect(left, top, right, top + border, paint)
+            canvas.drawRect(left, top, right, top + pianoKeyBorder, paint)
             paint.color = bottomBorderColor
-            canvas.drawRect(left, bottom - border, right, bottom, paint)
+            canvas.drawRect(left, bottom - pianoKeyBorder, right, bottom, paint)
         }
     }
 
@@ -997,8 +991,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     private fun drawNote(canvas: Canvas, note: Note) {
-        val border = pianoKeyHeight / 20f
-
         // Namalovat okraje
         var noteRectF = note.rectF
 
@@ -1010,7 +1002,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             }
         }
 
-        noteRectF = RectF(noteRectF.left + border, noteRectF.top + border, noteRectF.right - border, noteRectF.bottom - border)
+        noteRectF = RectF(noteRectF.left + pianoKeyBorder, noteRectF.top + pianoKeyBorder, noteRectF.right - pianoKeyBorder, noteRectF.bottom - pianoKeyBorder)
         val cornerRadiusX = (noteRectF.bottom - noteRectF.top) / 4f
         val cornerRadiusY = (noteRectF.bottom - noteRectF.top) * 2f / scaleFactorX
         canvas.drawRoundRect(noteRectF, cornerRadiusY, cornerRadiusX, paint)
@@ -1018,8 +1010,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
     private fun drawPiano(canvas: Canvas) {
         // Draw piano keys
-        val border = pianoKeyHeight / 20f
-
         val blackPianoKey = ContextCompat.getColor(context, R.color.darkKey)
         val whitePianoKey = ContextCompat.getColor(context, R.color.lightKey)
         val blackKeyText = ContextCompat.getColor(context, R.color.darkKeyFont)
@@ -1035,6 +1025,11 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         var keyColor = whitePianoKey
         var textColor = whiteKeyText
         var keyText = "C"
+        var textWidth = paint.measureText(keyText)
+        var textSizeForWidth = getTextSizeForWidth(paint, keyText, pianoKeyWidth)
+        var textSizeForHeight = getTextSizeForHeight(paint, pianoKeyHeight)
+        var textWidthPadding = 0f
+        var textHeightPadding = 0f
         var upperBorderColor = darkBorderColor
         var bottomBorderColor = lightBorderColor
 
@@ -1153,16 +1148,48 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             canvas.drawRoundRect(rect, cornerRadiusY, cornerRadiusX, paint)
 
             // draw key text
-            paint.textSize = pianoKeyHeight * 0.6f
             paint.color = textColor
-            canvas.drawText("$keyText$scaleNumber", it.left + 2f, it.bottom - pianoKeyHeight * 0.15f, paint)
+            keyText = "$keyText$scaleNumber"
+
+
+            textSizeForWidth = getTextSizeForWidth(paint, keyText, pianoKeyWidth)
+            textSizeForHeight = getTextSizeForHeight(paint, pianoKeyHeight)
+            paint.textSize = textSizeForHeight
+
+
+            if (textSizeForHeight > (it.bottom - it.top) * 0.8f) {
+                paint.textSize = textSizeForHeight * 0.8f
+            }
+
+            if (textSizeForWidth > (it.left - it.right) * 0.8f && textSizeForWidth < textSizeForHeight) {
+                paint.textSize = textSizeForWidth * 0.8f
+            }
+
+            textWidth = paint.measureText(keyText)
+            textWidthPadding = (it.right - it.left - textWidth) / 2f
+
+            textHeightPadding = ((it.bottom - it.top + (paint.descent() + paint.ascent())) / 2f)
+            canvas.drawText(keyText, it.left + textWidthPadding, it.bottom - textHeightPadding, paint)
 
             // draw borders
             paint.color = bottomBorderColor
-            canvas.drawRect(it.left, it.bottom - border, it.right, it.bottom, paint)
+            canvas.drawRect(it.left, it.bottom - pianoKeyBorder, it.right, it.bottom, paint)
             paint.color = upperBorderColor
-            canvas.drawRect(it.left, it.top, it.right, it.top + border, paint)
+            canvas.drawRect(it.left, it.top, it.right, it.top + pianoKeyBorder, paint)
         }
+    }
+
+    private fun getTextSizeForHeight(paint: Paint, height: Float): Float {
+        val testTextSize = 1f
+        paint.textSize = testTextSize
+        val textHeight = paint.descent() - paint.ascent()
+        return testTextSize * height / textHeight
+    }
+
+    private fun getTextSizeForWidth(paint: Paint, str: String, width: Float): Float {
+        val testTextSize = 1f
+        paint.textSize = testTextSize
+        return testTextSize * width / paint.measureText(str)
     }
 
     private fun playNotes() {
