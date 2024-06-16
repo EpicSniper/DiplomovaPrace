@@ -17,11 +17,15 @@ import androidx.core.content.ContextCompat
 import cz.uhk.diplomovaprace.PianoRoll.Midi.MidiCreator
 import cz.uhk.diplomovaprace.PianoRoll.Midi.MidiFactory
 import cz.uhk.diplomovaprace.PianoRoll.Midi.MidiPlayer
+import cz.uhk.diplomovaprace.PianoRoll.Midi.Project
 import cz.uhk.diplomovaprace.PianoRoll.Midi.Track
 import cz.uhk.diplomovaprace.R
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.jtransforms.fft.DoubleFFT_1D
 import kotlin.math.*
 import kotlin.math.pow
@@ -64,6 +68,9 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private var beatLength = 480
     private var barLength = barTimeSignature * 4 * beatLength
     private var tempo = 60
+
+    private var project = Project()
+    private var activeTrack = Track()
 
     public var isPlaying = false
     private var lineOnTime = 0f
@@ -270,6 +277,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             lineOnTime += ((tempo / 60f) * beatLength) * elapsedTime / 1000f
             lastFrameTime = currentTime
             playNotes()
+            serializeActiveTrack()
+            deserializeTrack(serializeActiveTrack())
         }
 
         var midiCreator = MidiCreator()
@@ -603,7 +612,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
                     val start = startOfTheLastNote
                     val duration = recordingLineTime[i].toInt() - startOfTheLastNote
                     val rectF = getRectFromNoteInfo(pitch, start,duration)
-                    newNotes.add(Note(pitch, start, duration, rectF))
+                    newNotes.add(Note(pitch, start, duration, rectF.left, rectF.top, rectF.right, rectF.bottom))
                     lastNote = note
                     startOfTheLastNote = recordingLineTime[i].toInt()
                 }
@@ -617,7 +626,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         val start = startOfTheLastNote
         val duration = recordingLineTime.last().toInt() - startOfTheLastNote
         val rectF = getRectFromNoteInfo(pitch, start,duration)
-        newNotes.add(Note(pitch, start, duration, rectF))
+        newNotes.add(Note(pitch, start, duration, rectF.left, rectF.top, rectF.right, rectF.bottom))
 
         newNotes.forEach {
             notes.add(it)
@@ -924,7 +933,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
     private fun drawNote(canvas: Canvas, note: Note) {
         // Namalovat okraje
-        var noteRectF = note.rectF
+        var noteRectF = note.getRectF()
 
         paint.color = ContextCompat.getColor(context, R.color.note)
         // Namalovat vnitrek
@@ -1157,15 +1166,15 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
     fun rescaleRectsOfNotes(notes: ArrayList<Note>) {
         notes.forEach{
-            it.rectF = getRectFromNoteInfo(it.pitch, it.start, it.duration)
+            it.setRectF(getRectFromNoteInfo(it.pitch, it.start, it.duration))
         }
     }
 
     fun getRectFromNoteInfo(pitch: Byte, start: Int, duration: Int): RectF {
-        var bottom = height - (pitch * pianoKeyHeight)
-        var top = bottom - pianoKeyHeight
-        var left = start + pianoKeyWidth       // Posunuji o sirku klaves
-        var right = left + duration
+        val bottom = height - (pitch * pianoKeyHeight)
+        val top = bottom - pianoKeyHeight
+        val left = start + pianoKeyWidth       // Posunuji o sirku klaves
+        val right = left + duration
         return RectF(left, top, right, bottom)
     }
 
@@ -1212,7 +1221,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private fun onSingleTapUpEvent(eventX: Float, eventY: Float) {
         if (isEditing) {
             notes.forEach {
-                if (it.rectF.contains(eventX, eventY)) {
+                if (it.getRectF().contains(eventX, eventY)) {
                     if (selectedNotes.contains(it)) {
                         selectedNotes.remove(it)
                     } else {
@@ -1427,19 +1436,54 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
     private fun debugAddNotes() {
         var rectF = getRectFromNoteInfo(60, 0, 480)
-        var note = Note(60, 0,480, rectF)
+        var note = Note(60, 0,480, rectF.left, rectF.top, rectF.right, rectF.bottom)
         notes.add(note)
 
         rectF = getRectFromNoteInfo(64, 240,480)
-        note = Note(64, 240,960, rectF)
+        note = Note(64, 240,960, rectF.left, rectF.top, rectF.right, rectF.bottom)
         notes.add(note)
 
         rectF = getRectFromNoteInfo(64, 1440,960)
-        note = Note(60, 1440,480, rectF)
+        note = Note(60, 1440,480, rectF.left, rectF.top, rectF.right, rectF.bottom)
         notes.add(note)
 
         rectF = getRectFromNoteInfo(64, 1440,960)
-        note = Note(64, 1440,960, rectF)
+        note = Note(64, 1440,960, rectF.left, rectF.top, rectF.right, rectF.bottom)
         notes.add(note)
+    }
+
+    /*public fun loadProject(newProject: Project) {
+        project = newProject
+        if (project.getTracks().count() > 0) {
+            notes = project.getTracks()[0].getNotes()
+        }
+    }*/
+
+    public fun loadNewTrack(newTrack: Track) {
+        activeTrack = newTrack
+        loadActiveTrack()
+    }
+
+    public fun loadActiveTrack() {
+        notes = activeTrack.getNotes()
+    }
+
+    public fun saveActiveTrack(): Track {
+        activeTrack.setNotes(notes)
+        if (activeTrack.getName() == "") {
+            activeTrack.setName("Track-1")
+        }
+
+        return activeTrack
+    }
+
+    public fun serializeActiveTrack(): String {
+        val serialized = Json.encodeToString(saveActiveTrack())
+        return serialized
+    }
+
+    public fun deserializeTrack(serializedTrack: String): Track {
+        val deserialized = Json.decodeFromString<Track>(serializedTrack)
+        return deserialized
     }
 }
