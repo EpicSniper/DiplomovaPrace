@@ -12,7 +12,7 @@ class ProjectManager {
 
     private var projectsDirectory: String = "projects"
 
-    public fun saveTrackToFile(project: Project, context: Context) {
+    public fun saveProjectToFile(project: Project, context: Context) {
         // Save the track to a file
 
         val filename = project.getName() + UUID.randomUUID().toString().replace("-", "")
@@ -27,7 +27,7 @@ class ProjectManager {
         }
     }
 
-    public fun loadTrackFromFile(context: Context): ArrayList<Project> {
+    public fun loadProjectsFromFile(context: Context): ArrayList<Project> {
         val directory = context.getDir(projectsDirectory, Context.MODE_PRIVATE)
         val files = directory.listFiles()
         val projects = ArrayList<Project>()

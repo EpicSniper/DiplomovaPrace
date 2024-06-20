@@ -23,9 +23,6 @@ import cz.uhk.diplomovaprace.R
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import org.jtransforms.fft.DoubleFFT_1D
 import kotlin.math.*
 import kotlin.math.pow
@@ -36,10 +33,10 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
     private var paint = Paint()
     private var notes = ArrayList<Note>()
+    private var otherNotes = ArrayList<Note>()
     private var selectedNotes = ArrayList<Note>()
     private var playingNotes = ArrayList<Note>()
     private var pianoKeys = ArrayList<RectF>()  // TODO: vyuzit tento ArrayList
-    private var playingPianoKeys = ArrayList<Int>() // onTap only
     // TODO: vsechno dat do ArrayList()<RectF> -> pohlidam si tim klikani, vim, kde co je
 
     private var drawThread: DrawThread? = null
@@ -1478,12 +1475,49 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
     public fun saveProject() {
         val projectManager = ProjectManager()
-        projectManager.saveTrackToFile(project, context)
+        projectManager.saveProjectToFile(project, context)
     }
 
     public fun loadProjects(): ArrayList<Project> {
         val projectManager = ProjectManager()
-        val projects = projectManager.loadTrackFromFile(context)
+        val projects = projectManager.loadProjectsFromFile(context)
         return projects
+    }
+
+    public fun loadProject(project: Project) {
+        clearAll()
+        this.project = project
+        val tracks = project.getTracks()
+        if (tracks.isNotEmpty()) {
+            activeTrack = tracks[0]
+            notes = activeTrack.getNotes()
+            for (i in 1 until tracks.size) {
+                tracks[i].getNotes().forEach {
+                    otherNotes.add(it)
+                }
+            }
+        }
+    }
+
+    public fun changeActiveTrack(track: Track) {
+        activeTrack = track
+        notes = activeTrack.getNotes()
+        val tracks = project.getTracks()
+        tracks.forEach {
+            if (it != activeTrack) {
+                it.getNotes().forEach { note ->
+                    otherNotes.add(note)
+                }
+            }
+        }
+    }
+
+    private fun clearAll() {
+        notes.clear()
+        otherNotes.clear()
+        selectedNotes.clear()
+        playingNotes.clear()
+        project = Project()
+        activeTrack = Track()
     }
 }
