@@ -1,21 +1,27 @@
 package cz.uhk.diplomovaprace.PianoRoll.Midi
 
+import kotlinx.serialization.Serializable
 import java.time.LocalDateTime
 
+@Serializable
 class Project {
     private var tracks = ArrayList<Track>()
     private var name: String = ""
     private var tempo: Int = 120
     private var timeSignatureUpper: Int = 4
     private var timeSignatureLower: Int = 4
-    private var createdAt: LocalDateTime = LocalDateTime.now()
+    private var createdAt: String = LocalDateTime.now().toString()
 
-    fun getCreatedAt(): LocalDateTime {
+    fun getCreatedAt(): String {
         return createdAt
     }
 
     fun getFormattedCreatedAt(): String {
-        return createdAt.toString()
+        return createdAt
+    }
+
+    fun setCreatedAt(newCreatedAt: LocalDateTime) {
+        createdAt = newCreatedAt.toString()
     }
 
     fun getTracks(): ArrayList<Track> {
@@ -32,5 +38,37 @@ class Project {
 
     fun removeTrack(track: Track) {
         tracks.remove(track)
+    }
+
+    fun getName(): String {
+        return name
+    }
+
+    fun setName(newName: String) {
+        name = newName
+    }
+
+    fun getTempo(): Int {
+        return tempo
+    }
+
+    fun setTempo(newTempo: Int) {
+        tempo = newTempo
+    }
+
+    fun getTimeSignatureUpper(): Int {
+        return timeSignatureUpper
+    }
+
+    fun setTimeSignatureUpper(newTimeSignatureUpper: Int) {
+        timeSignatureUpper = newTimeSignatureUpper
+    }
+
+    fun getTimeSignatureLower(): Int {
+        return timeSignatureLower
+    }
+
+    fun setTimeSignatureLower(newTimeSignatureLower: Int) {
+        timeSignatureLower = newTimeSignatureLower
     }
 }

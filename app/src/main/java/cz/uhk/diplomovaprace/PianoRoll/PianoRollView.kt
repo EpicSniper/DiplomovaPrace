@@ -29,6 +29,7 @@ import kotlinx.serialization.json.Json
 import org.jtransforms.fft.DoubleFFT_1D
 import kotlin.math.*
 import kotlin.math.pow
+import cz.uhk.diplomovaprace.ProjectManager
 
 class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(context, attrs),
     SurfaceHolder.Callback, OnGestureListener, ScaleGestureDetector.OnScaleGestureListener {
@@ -277,8 +278,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             lineOnTime += ((tempo / 60f) * beatLength) * elapsedTime / 1000f
             lastFrameTime = currentTime
             playNotes()
-            serializeActiveTrack()
-            deserializeTrack(serializeActiveTrack())
         }
 
         var midiCreator = MidiCreator()
@@ -1477,13 +1476,14 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         return activeTrack
     }
 
-    public fun serializeActiveTrack(): String {
-        val serialized = Json.encodeToString(saveActiveTrack())
-        return serialized
+    public fun saveProject() {
+        val projectManager = ProjectManager()
+        projectManager.saveTrackToFile(project, context)
     }
 
-    public fun deserializeTrack(serializedTrack: String): Track {
-        val deserialized = Json.decodeFromString<Track>(serializedTrack)
-        return deserialized
+    public fun loadProjects(): ArrayList<Project> {
+        val projectManager = ProjectManager()
+        val projects = projectManager.loadTrackFromFile(context)
+        return projects
     }
 }
