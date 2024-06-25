@@ -26,7 +26,7 @@ import kotlinx.coroutines.launch
 import org.jtransforms.fft.DoubleFFT_1D
 import kotlin.math.*
 import kotlin.math.pow
-import cz.uhk.diplomovaprace.ProjectManager
+import cz.uhk.diplomovaprace.Project.ProjectManager
 
 class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(context, attrs),
     SurfaceHolder.Callback, OnGestureListener, ScaleGestureDetector.OnScaleGestureListener {

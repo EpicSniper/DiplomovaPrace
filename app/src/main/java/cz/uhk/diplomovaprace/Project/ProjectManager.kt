@@ -1,4 +1,4 @@
-package cz.uhk.diplomovaprace
+package cz.uhk.diplomovaprace.Project
 
 import android.content.Context
 import cz.uhk.diplomovaprace.PianoRoll.Midi.Project
@@ -13,11 +13,8 @@ class ProjectManager {
     private var projectsDirectory: String = "projects"
 
     public fun saveProjectToFile(project: Project, context: Context) {
-        // Save the track to a file
-
         val filename = project.getName() + UUID.randomUUID().toString().replace("-", "")
         val serialized = Json.encodeToString(project)
-
 
         val directory = context.getDir(projectsDirectory, Context.MODE_PRIVATE)
         val file = File(directory, filename)
@@ -27,16 +24,22 @@ class ProjectManager {
         }
     }
 
-    public fun loadProjectsFromFile(context: Context): ArrayList<Project> {
-        val directory = context.getDir(projectsDirectory, Context.MODE_PRIVATE)
-        val files = directory.listFiles()
+    public fun loadProjectsFromFile(context: Context?): ArrayList<Project> {
+        val directory = context?.getDir(projectsDirectory, Context.MODE_PRIVATE)
+        val files = directory?.listFiles()
         val projects = ArrayList<Project>()
         files?.forEach {
             val serialized = it.readText()
-            val track = Json.decodeFromString<Project>(serialized)
-            projects.add(track)
+            val project = Json.decodeFromString<Project>(serialized)
+            projects.add(project)
         }
 
         return projects
+    }
+
+    companion object {
+        fun getInstance(requireContext: Context): Any {
+            return ProjectManager()
+        }
     }
 }
