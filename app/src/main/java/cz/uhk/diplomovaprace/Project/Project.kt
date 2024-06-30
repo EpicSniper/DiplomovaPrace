@@ -1,4 +1,4 @@
-package cz.uhk.diplomovaprace.PianoRoll.Midi
+package cz.uhk.diplomovaprace.Project
 
 import kotlinx.serialization.Serializable
 import java.time.LocalDateTime

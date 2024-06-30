@@ -1,4 +1,4 @@
-package cz.uhk.diplomovaprace.PianoRoll.Midi
+package cz.uhk.diplomovaprace.Project
 
 import cz.uhk.diplomovaprace.PianoRoll.Note
 import kotlinx.serialization.Serializable

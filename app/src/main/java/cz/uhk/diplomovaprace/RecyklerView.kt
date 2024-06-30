@@ -3,8 +3,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import cz.uhk.diplomovaprace.PianoRoll.Midi.Project
+import cz.uhk.diplomovaprace.Project.Project
 import cz.uhk.diplomovaprace.R
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 class ProjektAdapter(private val projects: List<Project>) :
     RecyclerView.Adapter<ProjektAdapter.ProjektViewHolder>() {
@@ -22,9 +24,15 @@ class ProjektAdapter(private val projects: List<Project>) :
 
     override fun onBindViewHolder(holder: ProjektViewHolder, position: Int) {
         val project = projects[position]
-        holder.nazevTextView.text = project.getName()
-        holder.popisTextView.text = project.getCreatedAt()
+        holder.nazevTextView.text = project.getCreatedAt()
+        holder.popisTextView.text = getFormattedDateTime(project.getCreatedAt())
     }
 
     override fun getItemCount(): Int = projects.size
+
+    private fun getFormattedDateTime(dateTime: String): String {
+        val localDateTime = LocalDateTime.parse(dateTime)
+        val formatter = DateTimeFormatter.ofPattern("HH:mm, d MMM yyyy")
+        return localDateTime.format(formatter)
+    }
 }

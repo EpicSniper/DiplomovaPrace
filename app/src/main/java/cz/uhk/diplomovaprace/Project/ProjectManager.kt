@@ -1,7 +1,6 @@
 package cz.uhk.diplomovaprace.Project
 
 import android.content.Context
-import cz.uhk.diplomovaprace.PianoRoll.Midi.Project
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json

@@ -17,8 +17,8 @@ import androidx.core.content.ContextCompat
 import cz.uhk.diplomovaprace.PianoRoll.Midi.MidiCreator
 import cz.uhk.diplomovaprace.PianoRoll.Midi.MidiFactory
 import cz.uhk.diplomovaprace.PianoRoll.Midi.MidiPlayer
-import cz.uhk.diplomovaprace.PianoRoll.Midi.Project
-import cz.uhk.diplomovaprace.PianoRoll.Midi.Track
+import cz.uhk.diplomovaprace.Project.Project
+import cz.uhk.diplomovaprace.Project.Track
 import cz.uhk.diplomovaprace.R
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay

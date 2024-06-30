@@ -3,9 +3,10 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:paddingHorizontal="20dp">
 
     <TextView
+        android:layout_marginTop="20dp"
         android:id="@+id/nazevProjektuTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -16,5 +17,11 @@
         android:id="@+id/popisProjektuTextView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
+
+    <View
+        android:layout_marginTop="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/text2" />
 
 </LinearLayout>
