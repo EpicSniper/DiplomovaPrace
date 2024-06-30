@@ -24,6 +24,7 @@ class ProjektAdapter(private val projects: List<Project>) :
 
     override fun onBindViewHolder(holder: ProjektViewHolder, position: Int) {
         val project = projects[position]
+        //TODO: nastavit delku projektu
         holder.nazevTextView.text = project.getCreatedAt()
         holder.popisTextView.text = getFormattedDateTime(project.getCreatedAt())
     }
