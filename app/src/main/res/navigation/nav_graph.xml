@@ -37,6 +37,9 @@
         <action
             android:id="@+id/action_savedFilesFragment_to_mainMenuFragment"
             app:destination="@id/mainMenuFragment" />
+        <action
+            android:id="@+id/action_savedFilesFragment_to_pianoRollFragment"
+            app:destination="@id/pianoRollFragment" />
     </fragment>
     <fragment
         android:id="@+id/pianoRollFragment"

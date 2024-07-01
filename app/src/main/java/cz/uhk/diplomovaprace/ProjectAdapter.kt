@@ -8,8 +8,8 @@ import cz.uhk.diplomovaprace.R
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-class ProjektAdapter(private val projects: List<Project>) :
-    RecyclerView.Adapter<ProjektAdapter.ProjektViewHolder>() {
+class ProjectAdapter(private val projects: List<Project>) :
+    RecyclerView.Adapter<ProjectAdapter.ProjektViewHolder>() {
 
     class ProjektViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nazevTextView: TextView = itemView.findViewById(R.id.nazevProjektuTextView)

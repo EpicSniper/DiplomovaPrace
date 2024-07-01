@@ -7,7 +7,9 @@ import android.view.SurfaceView
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import androidx.fragment.app.viewModels
 import cz.uhk.diplomovaprace.PianoRoll.PianoRollView
+import cz.uhk.diplomovaprace.Project.ProjectViewModel
 
 
 /**
@@ -22,6 +24,8 @@ class PianoRollFragment : Fragment() {
     private lateinit var recordButton: ImageView
     private lateinit var stopButton: ImageView
 
+    private val viewModel: ProjectViewModel by viewModels()
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -35,6 +39,21 @@ class PianoRollFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         // set the data for the piano roll view
+        viewModel.selectedProject.observe(viewLifecycleOwner) { project ->
+            // Inicializujte Piano Roll s datyz projec
+            // TODO: v pianorollu napsat funkci na import projektu
+            pianoRollView.setTempo(project.getTempo())
+            pianoRollView.setTimeSignature(project.getTimeSignatureUpper(), project.getTimeSignatureLower())
+
+            for (track in project.getTracks()) {
+                // Vytvořte novou stopu v Piano Rollu pro každý track v projektu
+                val pianoRollTrack = pianoRollView.createTrack()
+
+                for (note in track.getNotes()) {
+                    // Přidejte noty do stopy v Piano Rollu
+                    pianoRollTrack.addNote(note)
+                }}
+        }
 
         // Get the buttons from the view
         playButton = view.findViewById(R.id.imageView4)
