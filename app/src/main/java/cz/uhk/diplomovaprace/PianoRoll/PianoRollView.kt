@@ -205,7 +205,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
         rectFArrayListInicialization()
 
-        debugAddNotes()
+        //debugAddNotes()
 
         midiPlayer = MidiPlayer()
 
@@ -1486,6 +1486,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
     public fun loadProject(project: Project) {
         clearAll()
+        this.barTimeSignature = project.getTimeSignatureUpper() / project.getTimeSignatureLower().toFloat()
         this.project = project
         val tracks = project.getTracks()
         if (tracks.isNotEmpty()) {

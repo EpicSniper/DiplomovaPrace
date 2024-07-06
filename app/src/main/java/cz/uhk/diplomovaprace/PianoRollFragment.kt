@@ -40,19 +40,7 @@ class PianoRollFragment : Fragment() {
 
         // set the data for the piano roll view
         viewModel.selectedProject.observe(viewLifecycleOwner) { project ->
-            // Inicializujte Piano Roll s datyz projec
-            // TODO: v pianorollu napsat funkci na import projektu
-            pianoRollView.setTempo(project.getTempo())
-            pianoRollView.setTimeSignature(project.getTimeSignatureUpper(), project.getTimeSignatureLower())
-
-            for (track in project.getTracks()) {
-                // Vytvořte novou stopu v Piano Rollu pro každý track v projektu
-                val pianoRollTrack = pianoRollView.createTrack()
-
-                for (note in track.getNotes()) {
-                    // Přidejte noty do stopy v Piano Rollu
-                    pianoRollTrack.addNote(note)
-                }}
+            pianoRollView.loadProject(project)
         }
 
         // Get the buttons from the view

@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
@@ -24,6 +25,19 @@ class SavedFilesFragment : Fragment() {
     ): View? {
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_saved_files, container, false)
+        /*val newProjectLayout: LinearLayout = view.findViewById(R.id.newProjectLayout)
+
+        // Nastavte listener pro kliknutí
+        newProjectLayout.setOnClickListener {// Zavolejte funkci loadClearProject
+            // ...
+
+            // Navigujte na PianoRollFragment
+            findNavController().navigate(R.id.action_savedFilesFragment_to_pianoRollFragment)
+        }*/
+
+
+
+
 
         val projectManager = ProjectManager()
 

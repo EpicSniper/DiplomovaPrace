@@ -6,25 +6,29 @@
     android:paddingHorizontal="20dp">
 
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
         android:layout_weight="1"
-        android:layout_marginTop="20dp">
+        android:gravity="bottom">
 
         <TextView
             android:id="@+id/nazevProjektuTextView"
-            android:layout_width="327dp"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Nazev"
+            android:layout_gravity="start"
+            android:layout_weight="4"
+            android:text="Nazev k k k k k k k k k k k  k k k  k k k "
             android:textSize="18sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/delkaProjektuTextView"
-            android:layout_width="54dp"
-            android:layout_height="24dp"
-            android:layout_weight="0"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_weight="1"
+            android:maxWidth="60dp"
             android:text="0:25"
             android:textAlignment="textEnd"
             android:textSize="18sp" />
@@ -51,51 +55,3 @@
         android:background="@color/text2" />
 
 </LinearLayout>
-
-
-    <!--<LinearLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="test test test test test test test test test test test test test test test"
-                android:layout_weight="1"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:id="@+id/nazevProjektuTextView"
-                android:layout_height="wrap_content"
-                android:text="Hello world"
-                android:layout_weight="0"/>
-        </LinearLayout>
-
-        <Space android:layout_width="wrap_content" android:layout_height="20dp"/>
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="test test test test test test test test "
-                android:layout_weight="1"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/popisProjektuTextView"
-                android:text="Hello world"
-                android:layout_weight="0"/>
-        </LinearLayout>
-
-    </LinearLayout>
-    -->
