@@ -92,6 +92,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         paint.hinting = Paint.HINTING_OFF
         holder.addCallback(this)
         setWillNotDraw(false)
+        clearAll()
     }
 
     private inner class DrawThread() : Thread() {
@@ -1513,7 +1514,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         }
     }
 
-    private fun clearAll() {
+    public fun clearAll() {
         notes.clear()
         otherNotes.clear()
         selectedNotes.clear()

@@ -9,6 +9,6 @@ class ProjectViewModel : ViewModel() {
     val selectedProject: LiveData<Project> = _selectedProject
 
     fun selectProject(project: Project) {
-        _selectedProject.value = project
+        _selectedProject.postValue(project)
     }
 }

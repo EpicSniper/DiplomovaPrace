@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -17,7 +18,7 @@ import cz.uhk.diplomovaprace.Project.ProjectViewModel
 
 class SavedFilesFragment : Fragment() {
 
-    private val viewModel: ProjectViewModel by viewModels()
+    private val viewModel: ProjectViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
