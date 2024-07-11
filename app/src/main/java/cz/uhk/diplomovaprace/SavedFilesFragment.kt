@@ -26,19 +26,10 @@ class SavedFilesFragment : Fragment() {
     ): View? {
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_saved_files, container, false)
-        /*val newProjectLayout: LinearLayout = view.findViewById(R.id.newProjectLayout)
-
-        // Nastavte listener pro kliknutí
-        newProjectLayout.setOnClickListener {// Zavolejte funkci loadClearProject
-            // ...
-
-            // Navigujte na PianoRollFragment
+        val linearLayoutInner: LinearLayout = view.findViewById(R.id.linearLayoutInner)
+        linearLayoutInner.setOnClickListener {
             findNavController().navigate(R.id.action_savedFilesFragment_to_pianoRollFragment)
-        }*/
-
-
-
-
+        }
 
         val projectManager = ProjectManager()
 
@@ -51,7 +42,7 @@ class SavedFilesFragment : Fragment() {
 
         recyclerView.addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
             override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
-                val childView = rv.findChildViewUnder(e.x,e.y)
+                val childView = rv.findChildViewUnder(e.x, e.y)
                 if (childView != null && rv.getChildViewHolder(childView) is ProjectAdapter.ProjektViewHolder) {
                     when (e.action) {
                         MotionEvent.ACTION_UP -> {
@@ -63,7 +54,8 @@ class SavedFilesFragment : Fragment() {
 
                             // Navigujte na PianoRollFragment
                             findNavController().navigate(R.id.action_savedFilesFragment_to_pianoRollFragment)
-                        }}
+                        }
+                    }
                 }
                 return false
             }
