@@ -19,6 +19,4 @@ class TimeSignaturePreference(context: Context, attrs: AttributeSet) : Preferenc
         timeSignatureTop = view.findViewById(R.id.timeSignatureTop)
         timeSignatureBottom = view.findViewById(R.id.timeSignatureBottom)
     }
-
-
 }

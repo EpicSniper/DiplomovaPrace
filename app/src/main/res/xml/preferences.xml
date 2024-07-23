@@ -17,6 +17,13 @@
         android:defaultValue="440"
         app:useSimpleSummaryProvider="true" />
 
+    <cz.uhk.diplomovaprace.NumericEditTextPreference
+        android:key="bpm"
+        android:title="Beats per minute"
+        android:summary="Nastavte počet úderů za minutu"
+        android:defaultValue="120"
+        app:useSimpleSummaryProvider="true" />
+
     <cz.uhk.diplomovaprace.TimeSignaturePreference
         android:key="time_signature_key"
         android:title="Time Signature"
