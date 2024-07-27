@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import cz.uhk.diplomovaprace.Settings.SettingsBottomSheetDialogFragment
 
 class MainMenuFragment : Fragment() {
 
@@ -26,7 +27,8 @@ class MainMenuFragment : Fragment() {
 
         val imageButton3: ImageView = view.findViewById(R.id.imageButton3)
         imageButton3.setOnClickListener {
-            findNavController().navigate(R.id.action_mainMenuFragment_to_settingsFragment)
+            val bottomSheetDialog = SettingsBottomSheetDialogFragment()
+            bottomSheetDialog.show(parentFragmentManager, "SettingsBottomSheet")
         }
     }
 

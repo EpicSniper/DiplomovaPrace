@@ -52,7 +52,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".SettingsFragment"
+            android:name=".Settings.SettingsFragment"
             android:exported="true"
             android:label="SettingsActivity"
             android:theme="@style/Theme.DiplomovaPrace.NoActionBar">

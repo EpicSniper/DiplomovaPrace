@@ -23,7 +23,7 @@
 
     <fragment
         android:id="@+id/settingsFragment"
-        android:name="cz.uhk.diplomovaprace.SettingsFragment"
+        android:name="cz.uhk.diplomovaprace.Settings.SettingsFragment"
         android:label="fragment_settings"
         tools:layout="@layout/fragment_settings" >
         <action

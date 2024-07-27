@@ -6,6 +6,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import android.Manifest
+import android.view.View
+import androidx.compose.ui.text.font.FontVariation
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import cz.uhk.diplomovaprace.Settings.SettingsBottomSheetDialogFragment
+import cz.uhk.diplomovaprace.Settings.SettingsFragment
 
 class MainActivity : AppCompatActivity() {
 

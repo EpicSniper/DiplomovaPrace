@@ -1,4 +1,4 @@
-package cz.uhk.diplomovaprace
+package cz.uhk.diplomovaprace.Settings
 
 import android.content.Context
 import android.text.InputType

@@ -10,7 +10,6 @@
         android:layout_height="wrap_content"
         android:text="Taktové značení"
         android:textSize="18sp"
-        android:textStyle="bold"
         android:paddingHorizontal="16dp"/>
 
     <LinearLayout

@@ -1,12 +1,11 @@
-package cz.uhk.diplomovaprace
+package cz.uhk.diplomovaprace.Settings
 
 import android.content.Context
 import android.util.AttributeSet
-import android.view.View
 import android.widget.EditText
-import android.widget.NumberPicker
 import androidx.preference.Preference
 import androidx.preference.PreferenceViewHolder
+import cz.uhk.diplomovaprace.R
 
 class TimeSignaturePreference(context: Context, attrs: AttributeSet) : Preference(context, attrs) {
 
