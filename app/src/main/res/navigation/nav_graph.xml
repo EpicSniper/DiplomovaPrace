@@ -11,25 +11,13 @@
         android:label="fragment_main_menu"
         tools:layout="@layout/fragment_main_menu" >
         <action
-            android:id="@+id/action_mainMenuFragment_to_settingsFragment"
-            app:destination="@id/settingsFragment" />
-        <action
             android:id="@+id/action_mainMenuFragment_to_savedFilesFragment"
             app:destination="@id/savedFilesFragment" />
         <action
-            android:id="@+id/action_mainMenuFragment_to_newRecording"
-            app:destination="@id/pianoRollFragment" />
+            android:id="@+id/action_mainMenuFragment_to_newProjectSettingsFragment"
+            app:destination="@id/newProjectSettingsFragment" />
     </fragment>
 
-    <fragment
-        android:id="@+id/settingsFragment"
-        android:name="cz.uhk.diplomovaprace.Settings.SettingsFragment"
-        android:label="fragment_settings"
-        tools:layout="@layout/fragment_settings" >
-        <action
-            android:id="@+id/action_settingsFragment_to_mainMenuFragment"
-            app:destination="@id/mainMenuFragment" />
-    </fragment>
     <fragment
         android:id="@+id/savedFilesFragment"
         android:name="cz.uhk.diplomovaprace.SavedFilesFragment"
@@ -40,10 +28,21 @@
         <action
             android:id="@+id/action_savedFilesFragment_to_pianoRollFragment"
             app:destination="@id/pianoRollFragment" />
+        <action
+            android:id="@+id/action_savedFilesFragment_to_newProjectSettingsFragment"
+            app:destination="@id/newProjectSettingsFragment" />
     </fragment>
     <fragment
         android:id="@+id/pianoRollFragment"
         android:name="cz.uhk.diplomovaprace.PianoRollFragment"
         android:label="fragment_piano_roll"
         tools:layout="@layout/fragment_piano_roll" />
+    <fragment
+        android:id="@+id/newProjectSettingsFragment"
+        android:name="cz.uhk.diplomovaprace.Settings.NewProjectSettingsFragment"
+        android:label="NewProjectSettingsFragment" >
+        <action
+            android:id="@+id/action_newProjectSettingsFragment_to_pianoRollFragment"
+            app:destination="@id/pianoRollFragment" />
+    </fragment>
 </navigation>

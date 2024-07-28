@@ -17,7 +17,7 @@ class MainMenuFragment : Fragment() {
 
         val imageButton1: ImageView = view.findViewById(R.id.imageButton1)
         imageButton1.setOnClickListener {
-            findNavController().navigate(R.id.action_mainMenuFragment_to_newRecording)
+            findNavController().navigate(R.id.action_mainMenuFragment_to_newProjectSettingsFragment)
         }
 
         val imageButton2: ImageView = view.findViewById(R.id.imageButton2)

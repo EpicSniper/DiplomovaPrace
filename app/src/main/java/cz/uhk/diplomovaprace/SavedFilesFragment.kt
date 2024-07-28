@@ -28,7 +28,7 @@ class SavedFilesFragment : Fragment() {
         val view = inflater.inflate(R.layout.fragment_saved_files, container, false)
         val linearLayoutInner: LinearLayout = view.findViewById(R.id.linearLayoutInner)
         linearLayoutInner.setOnClickListener {
-            findNavController().navigate(R.id.action_savedFilesFragment_to_pianoRollFragment)
+            findNavController().navigate(R.id.action_savedFilesFragment_to_newProjectSettingsFragment)
         }
 
         val projectManager = ProjectManager()
