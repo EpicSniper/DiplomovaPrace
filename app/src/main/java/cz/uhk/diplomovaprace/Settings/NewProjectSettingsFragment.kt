@@ -5,15 +5,19 @@ import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import androidx.preference.Preference
 import cz.uhk.diplomovaprace.PreferenceFragment
 import cz.uhk.diplomovaprace.Project.Project
+import cz.uhk.diplomovaprace.Project.ProjectViewModel
 import cz.uhk.diplomovaprace.R
 
 class NewProjectSettingsFragment : Fragment(R.layout.fragment_new_project_settings) {
+
+    val viewModel: ProjectViewModel by activityViewModels()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -28,7 +32,6 @@ class NewProjectSettingsFragment : Fragment(R.layout.fragment_new_project_settin
             childFragmentManager.findFragmentById(R.id.preference_container) as? PreferenceFragment
 
         view.findViewById<Button>(R.id.button3).setOnClickListener {
-            // Retrieve values from preferences
             val algorithmType =
                 preferenceFragment?.findPreference<ListPreference>("preference_key")?.value
             val pitchOfA1 =
@@ -45,6 +48,7 @@ class NewProjectSettingsFragment : Fragment(R.layout.fragment_new_project_settin
             newProject.setTimeSignatureLower(timeSignatureBottom ?: 4)
             newProject.setTimeSignatureUpper(timeSignatureTop ?: 4)
             newProject.setTempo(bpm ?: 120)
+            viewModel.selectProject(newProject)
 
             findNavController().navigate(R.id.action_newProjectSettingsFragment_to_pianoRollFragment)
         }

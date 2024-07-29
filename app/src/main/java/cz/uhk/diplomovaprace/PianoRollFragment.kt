@@ -11,6 +11,7 @@ import android.widget.ImageView
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import cz.uhk.diplomovaprace.PianoRoll.PianoRollView
+import cz.uhk.diplomovaprace.Project.Project
 import cz.uhk.diplomovaprace.Project.ProjectViewModel
 
 
@@ -51,9 +52,9 @@ class PianoRollFragment : Fragment() {
         recordButton = view.findViewById(R.id.imageView5)
         stopButton = view.findViewById(R.id.imageView6)
 
-        playButton.visibility = View.VISIBLE
-        recordButton.visibility = View.VISIBLE
-        stopButton.visibility = View.INVISIBLE
+        playButton.alpha = 1f
+        recordButton.alpha = 1f
+        stopButton.alpha = 0.3f
 
         // Set the onClickListeners for the buttons
         playButton.setOnClickListener {
@@ -77,13 +78,13 @@ class PianoRollFragment : Fragment() {
 
     private fun updateButtonStates() {
         if (pianoRollView.isPlaying || pianoRollView.isRecording) {
-            playButton.visibility = View.INVISIBLE
-            recordButton.visibility = View.INVISIBLE
-            stopButton.visibility = View.VISIBLE
+            playButton.alpha = 0.3f
+            recordButton.alpha = 0.3f
+            stopButton.alpha = 1f
         } else {
-            playButton.visibility = View.VISIBLE
-            recordButton.visibility = View.VISIBLE
-            stopButton.visibility = View.INVISIBLE
+            playButton.alpha = 1f
+            recordButton.alpha = 1f
+            stopButton.alpha = 0.3f
         }
     }
 }

@@ -10,7 +10,7 @@
 
     <cz.uhk.diplomovaprace.PianoRoll.PianoRollView
         android:id="@+id/piano_roll_view"
-        android:layout_width="437dp"
+        android:layout_width="0dp"
         android:layout_height="660dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
