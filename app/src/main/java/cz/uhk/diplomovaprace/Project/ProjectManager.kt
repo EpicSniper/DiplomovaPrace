@@ -12,7 +12,11 @@ class ProjectManager {
     private var projectsDirectory: String = "projects"
 
     public fun saveProjectToFile(project: Project, context: Context) {
-        val filename = project.getName() + UUID.randomUUID().toString().replace("-", "")
+        if (project.getUuid().isEmpty()) {
+            project.setUuid(UUID.randomUUID().toString().replace("-", ""))
+        }
+
+        val filename = project.getUuid()
         val serialized = Json.encodeToString(project)
 
         val directory = context.getDir(projectsDirectory, Context.MODE_PRIVATE)
@@ -37,8 +41,9 @@ class ProjectManager {
     }
 
     public fun deleteProjectFile(project: Project, context: Context) {
+        val projects = this.loadProjectsFromFile(context)
         val directory = context.getDir(projectsDirectory, Context.MODE_PRIVATE)
-        val file = File(directory, project.getName())
+        val file = File(directory, project.getUuid())
         file.delete()
     }
 

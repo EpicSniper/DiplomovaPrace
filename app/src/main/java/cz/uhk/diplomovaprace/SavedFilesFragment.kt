@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupMenu
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
@@ -50,13 +51,29 @@ class SavedFilesFragment : Fragment() {
 
                 popup.setOnMenuItemClickListener { item ->
                     when (item.itemId) {
-                        R.id.action_rename -> {
-                            // Handle rename action for the project at 'position'
-                            true
-                        }
+                        // ... other menu items
 
                         R.id.action_delete -> {
-                            // Handle delete action for the project at 'position'
+                            // Show confirmation dialog
+                            AlertDialog.Builder(requireContext())
+                                .setTitle("Delete Project")
+                                .setMessage("Are you sure you want to delete this project?")
+                                .setPositiveButton("Delete") { dialog, _ ->
+                                    // Handle project deletion here
+                                    val projectToDelete = projects[position]
+                                    context?.let {
+                                        projectManager.deleteProjectFile(projectToDelete,
+                                            it
+                                        )
+                                    }
+                                    projects.remove(projectToDelete)
+                                    adapter.notifyItemRemoved(position)
+                                    dialog.dismiss()
+                                }
+                                .setNegativeButton("Cancel") { dialog, _ ->
+                                    dialog.dismiss()
+                                }
+                                .show()
                             true
                         }
 

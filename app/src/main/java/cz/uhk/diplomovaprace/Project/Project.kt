@@ -11,6 +11,15 @@ class Project {
     private var timeSignatureUpper: Int = 4
     private var timeSignatureLower: Int = 4
     private var createdAt: String = LocalDateTime.now().toString()
+    private var uuid: String = ""
+
+    fun getUuid(): String {
+        return uuid
+    }
+
+    fun setUuid(newUuid: String) {
+        uuid = newUuid
+    }
 
     fun getCreatedAt(): String {
         return createdAt
