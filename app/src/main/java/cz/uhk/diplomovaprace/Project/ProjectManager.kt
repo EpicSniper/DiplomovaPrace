@@ -36,6 +36,12 @@ class ProjectManager {
         return projects
     }
 
+    public fun deleteProjectFile(project: Project, context: Context) {
+        val directory = context.getDir(projectsDirectory, Context.MODE_PRIVATE)
+        val file = File(directory, project.getName())
+        file.delete()
+    }
+
     companion object {
         fun getInstance(requireContext: Context): Any {
             return ProjectManager()

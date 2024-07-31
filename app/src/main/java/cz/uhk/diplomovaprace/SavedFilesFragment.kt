@@ -1,15 +1,17 @@
 package cz.uhk.diplomovaprace
 
 import ProjectAdapter
+import android.graphics.Rect
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -38,30 +40,31 @@ class SavedFilesFragment : Fragment() {
 
         val recyclerView: RecyclerView = view.findViewById(R.id.projektyRecyclerView)
         recyclerView.layoutManager = LinearLayoutManager(context)
-        recyclerView.adapter = ProjectAdapter(projects)
+        val adapter = ProjectAdapter(projects, viewModel, findNavController())
+        recyclerView.adapter = adapter
 
-        recyclerView.addOnItemTouchListener(object : RecyclerView.OnItemTouchListener {
-            override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
-                val childView = rv.findChildViewUnder(e.x, e.y)
-                if (childView != null && rv.getChildViewHolder(childView) is ProjectAdapter.ProjektViewHolder) {
-                    when (e.action) {
-                        MotionEvent.ACTION_UP -> {
-                            val position = rv.getChildAdapterPosition(childView)
-                            val project = projects[position]
+        adapter.setOnMenuClickListener(object : ProjectAdapter.OnMenuClickListener {
+            override fun onMenuClick(view: View, position: Int) {
+                val popup = PopupMenu(requireContext(), view)
+                popup.inflate(R.menu.project_item_menu)
 
-                            // Uložte vybraný projekt do ViewModel
-                            viewModel.selectProject(project)
-
-                            // Navigujte na PianoRollFragment
-                            findNavController().navigate(R.id.action_savedFilesFragment_to_pianoRollFragment)
+                popup.setOnMenuItemClickListener { item ->
+                    when (item.itemId) {
+                        R.id.action_rename -> {
+                            // Handle rename action for the project at 'position'
+                            true
                         }
+
+                        R.id.action_delete -> {
+                            // Handle delete action for the project at 'position'
+                            true
+                        }
+
+                        else -> false
                     }
                 }
-                return false
+                popup.show()
             }
-
-            override fun onTouchEvent(rv: RecyclerView, e: MotionEvent) {}
-            override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {}
         })
 
         return view

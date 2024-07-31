@@ -1,19 +1,46 @@
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.navigation.NavController
+import androidx.navigation.fragment.NavHostFragment.Companion.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import cz.uhk.diplomovaprace.Project.Project
+import cz.uhk.diplomovaprace.Project.ProjectViewModel
 import cz.uhk.diplomovaprace.R
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-class ProjectAdapter(private val projects: List<Project>) :
+class ProjectAdapter(private val projects: List<Project>, private val viewModel: ProjectViewModel, private val navController: NavController) :
     RecyclerView.Adapter<ProjectAdapter.ProjektViewHolder>() {
 
-    class ProjektViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner class ProjektViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nazevTextView: TextView = itemView.findViewById(R.id.nazevProjektuTextView)
         val popisTextView: TextView = itemView.findViewById(R.id.popisProjektuTextView)
+        val menuButton: ImageView = itemView.findViewById(R.id.menuImage)
+
+        init {
+            val textViewsContainer = itemView.findViewById<LinearLayout>(R.id.textViewsContainer)
+            textViewsContainer.setOnClickListener {
+                val position = adapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    val project = projects[position] // Get the project at the clicked position
+                    viewModel.selectProject(project) // Pass the selected project to your ViewModel (if needed)
+                    navController.navigate(R.id.action_savedFilesFragment_to_pianoRollFragment) // Navigate to PianoRollFragment
+                }
+            }
+
+            // Keep the click listener on menuButton for thePopupMenu
+            menuButton.setOnClickListener {
+                val position = adapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    onMenuClickListener?.onMenuClick(it, position)
+                }
+            }
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ProjektViewHolder {
@@ -35,5 +62,16 @@ class ProjectAdapter(private val projects: List<Project>) :
         val localDateTime = LocalDateTime.parse(dateTime)
         val formatter = DateTimeFormatter.ofPattern("HH:mm, d MMM yyyy")
         return localDateTime.format(formatter)
+    }
+
+    interface OnMenuClickListener {
+        fun onMenuClick(view: View, position: Int)
+    }
+
+    private var onMenuClickListener: OnMenuClickListener? = null
+
+    // Setter for the listener
+    fun setOnMenuClickListener(listener: OnMenuClickListener) {
+        this.onMenuClickListener = listener
     }
 }
