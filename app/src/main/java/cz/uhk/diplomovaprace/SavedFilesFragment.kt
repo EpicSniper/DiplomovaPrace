@@ -37,6 +37,7 @@ class SavedFilesFragment : Fragment() {
         }
 
         val projectManager = ProjectManager()
+        // TODO: smazat, pokud uz neni potreba
         //context?.let { projectManager.saveProjectToFile(Project(), it) }
 
         // Získání seznamu projektů
