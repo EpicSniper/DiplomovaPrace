@@ -62,9 +62,10 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private var pianoKeyHeight = (height - timelineHeight) / 128f
     private var pianoKeyBorder = pianoKeyHeight / 20f
 
-    private var barTimeSignature = 4 / 4f
+    private var upperTimeSignature = 4f
+    private var lowerTimeSignature = 4f
     private var beatLength = 480
-    private var barLength = barTimeSignature * 4 * beatLength
+    private var barLength = (upperTimeSignature / lowerTimeSignature) * 4 * beatLength
     private var tempo = 60
 
     private var project = Project()
@@ -187,10 +188,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         pianoKeyHeight = (height - timelineHeight) / 128f
         pianoKeyBorder = pianoKeyHeight / 20f
 
-        barTimeSignature = 4 / 4f
         beatLength = 480
-        barLength = barTimeSignature * 4 * beatLength
-        tempo = 60
+        barLength = (upperTimeSignature / lowerTimeSignature) * 4 * beatLength
 
         isPlaying = false
         lineOnTime = 0f
@@ -959,6 +958,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
         val left = scrollX + widthDifference / 2f
         val right = pianoKeyWidth + left
+        val middleX = left + pianoKeyWidth / 2f
 
         var keyColor = whitePianoKey
         var textColor = whiteKeyText
@@ -1081,9 +1081,11 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             // draw piano key
             paint.color = keyColor
             val rect = RectF(it.left, it.top, it.right, it.bottom)
+            val notRoundedRect = RectF(it.left, it.top, middleX, it.bottom)
             val cornerRadiusX = (it.bottom - it.top) / 5f
             val cornerRadiusY = (it.right - it.left) / 5f
             canvas.drawRoundRect(rect, cornerRadiusY, cornerRadiusX, paint)
+            canvas.drawRect(notRoundedRect, paint)
 
             // draw key text
             paint.color = textColor
@@ -1487,7 +1489,9 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
     public fun loadProject(project: Project) {
         clearAll()
-        this.barTimeSignature = project.getTimeSignatureUpper() / project.getTimeSignatureLower().toFloat()
+        this.upperTimeSignature = project.getTimeSignatureUpper().toFloat()
+        this.lowerTimeSignature = project.getTimeSignatureLower().toFloat()
+        this.tempo = project.getTempo()
         this.project = project
         val tracks = project.getTracks()
         if (tracks.isNotEmpty()) {
