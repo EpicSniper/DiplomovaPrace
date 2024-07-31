@@ -41,7 +41,6 @@ class ProjectManager {
     }
 
     public fun deleteProjectFile(project: Project, context: Context) {
-        val projects = this.loadProjectsFromFile(context)
         val directory = context.getDir(projectsDirectory, Context.MODE_PRIVATE)
         val file = File(directory, project.getUuid())
         file.delete()

@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupMenu
@@ -16,6 +17,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import cz.uhk.diplomovaprace.Project.Project
 import cz.uhk.diplomovaprace.Project.ProjectManager
 import cz.uhk.diplomovaprace.Project.ProjectViewModel
 
@@ -35,6 +37,7 @@ class SavedFilesFragment : Fragment() {
         }
 
         val projectManager = ProjectManager()
+        //context?.let { projectManager.saveProjectToFile(Project(), it) }
 
         // Získání seznamu projektů
         val projects = projectManager.loadProjectsFromFile(context)
@@ -51,7 +54,34 @@ class SavedFilesFragment : Fragment() {
 
                 popup.setOnMenuItemClickListener { item ->
                     when (item.itemId) {
-                        // ... other menu items
+                        R.id.action_rename -> {
+                            // Show dialog for renaming project
+                            val builder = AlertDialog.Builder(requireContext())
+                            val view = layoutInflater.inflate(R.layout.rename_dialog, null) // Inflate yourcustom dialog layout
+                            val editText = view.findViewById<EditText>(R.id.renameEditText) // Get the EditText
+
+                            builder.setView(view)
+                                .setPositiveButton("Rename") { dialog, _ ->
+                                    val newName = editText.text.toString()
+                                    if (newName.isNotBlank()) {
+                                        val projectToRename = projects[position]
+                                        // 1. Rename the project file in storage
+                                        projectToRename.setName(newName)
+                                        context?.let {
+                                            projectManager.saveProjectToFile(projectToRename, it)
+                                        }
+                                        // 2. Update the project object in the 'projects' list
+                                        // 3.Notify the adapter
+                                        adapter.notifyItemChanged(position)
+                                    }
+                                    dialog.dismiss()
+                                }
+                                .setNegativeButton("Cancel") { dialog, _ ->
+                                    dialog.dismiss()
+                                }
+                                .show()
+                            true
+                        }
 
                         R.id.action_delete -> {
                             // Show confirmation dialog

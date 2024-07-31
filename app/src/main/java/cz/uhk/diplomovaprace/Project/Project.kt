@@ -6,7 +6,7 @@ import java.time.LocalDateTime
 @Serializable
 class Project {
     private var tracks = ArrayList<Track>()
-    private var name: String = ""
+    private var name: String = "New project"
     private var tempo: Int = 120
     private var timeSignatureUpper: Int = 4
     private var timeSignatureLower: Int = 4
