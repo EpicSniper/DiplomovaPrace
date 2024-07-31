@@ -13,6 +13,8 @@
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
         <item name="android:fontFamily">@font/centurygothic_bold</item>
+        <!-- Nabarvit text na cervenou -->
+        <item name="android:textColor">@color/text2</item>
     </style>
 
     <style name="Theme.DiplomovaPrace.NoActionBar">
