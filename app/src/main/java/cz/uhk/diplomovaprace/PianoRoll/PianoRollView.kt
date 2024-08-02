@@ -37,6 +37,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private var selectedNotes = ArrayList<Note>()
     private var playingNotes = ArrayList<Note>()
     private var pianoKeys = ArrayList<RectF>()  // TODO: vyuzit tento ArrayList
+
     // TODO: vsechno dat do ArrayList()<RectF> -> pohlidam si tim klikani, vim, kde co je
     private var movingNoteIndex = -1
     private var movingNote = false
@@ -914,23 +915,23 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private fun inicializePianoKeys() {
         val left = scrollX + widthDifference / 2f
         val right = pianoKeyWidth + left
-
         for (i in 0 until 128) {
             // Vykresleni vnejsi casti
             val bottom = height - (i * pianoKeyHeight)
             val top = bottom - pianoKeyHeight
             val rectF = RectF(left, top, right, bottom)
-            pianoKeys.add(rectF)
+            pianoKeys.add(i, rectF)
         }
     }
 
-    // TODO: Budou potreba tyto metody pro konvert?
     private fun pitchToHeightConverter(pitch: Int): Float {
         return height / 2f  // FIXME: placeholder
     }
 
     private fun heightToPitchConverter(height: Float): Int {
-        return 60           // FIXME: placeholder
+        return pianoKeys.indexOfFirst {
+            it.top < height && it.bottom > height
+        }
     }
 
     private fun pitchToNameConverter(pitch: Int): String {
@@ -1328,10 +1329,15 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private fun onScrollingEvent(eventX1: Float, eventY1: Float, eventX2: Float, eventY2: Float) {
         // notes
         if (isEditing && movingNote && selectedNotes.isNotEmpty()) {
-            println("Moving note")
-            println(selectedNotes[movingNoteIndex].getRectF())
-            selectedNotes[movingNoteIndex].start = movingNoteStart + (convertEventX(eventX2) - convertEventX(eventX1)).toInt()
-            println(selectedNotes[movingNoteIndex].getRectF())
+            // left right
+            selectedNotes[movingNoteIndex].start =
+                movingNoteStart + (convertEventX(eventX2) - convertEventX(eventX1)).toInt()
+            selectedNotes[movingNoteIndex].pitch =
+                (movingNotePitch + (convertEventY(eventY2) - convertEventY(eventY1))).toInt()
+                    .toByte()
+            // up down
+            val newPitch = heightToPitchConverter(convertEventY(eventY2))
+            selectedNotes[movingNoteIndex].pitch = newPitch.toByte()
         }
         // timeline
         if (movingTimeLine) {
@@ -1399,7 +1405,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         println("DISTANCE - X: " + distanceX + " |Y: " + distanceY)
 
         if (!movingNote && isEditing) {
-            selectedNotes.forEachIndexed {index, it ->
+            selectedNotes.forEachIndexed { index, it ->
                 if (event1 != null) {
                     if (it.getRectF().contains(convertEventX(event1.x), convertEventY(event1.y))) {
                         movingNoteIndex = index
