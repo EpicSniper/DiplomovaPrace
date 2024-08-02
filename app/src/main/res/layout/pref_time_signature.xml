@@ -19,6 +19,7 @@
     android:orientation="horizontal">
 
     <EditText
+        android:key="time_signature_numerator"
         android:id="@+id/timeSignatureTop"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -37,6 +38,7 @@
         android:textAlignment="center" />
 
     <EditText
+        android:key="time_signature_denominator"
         android:id="@+id/timeSignatureBottom"
         android:layout_width="0dp"
         android:layout_height="wrap_content"

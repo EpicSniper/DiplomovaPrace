@@ -21,7 +21,9 @@ import cz.uhk.diplomovaprace.Settings.SettingsProjectDialogFragment
  * Use the [PianoRollFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
-class PianoRollFragment : Fragment() {
+class PianoRollFragment : Fragment(), SettingsProjectDialogFragment.SettingsProjectDialogListener {
+
+    private val settingsProjectDialogFragment = SettingsProjectDialogFragment()
 
     private lateinit var pianoRollView: PianoRollView
     private lateinit var playButton: ImageView
@@ -69,6 +71,8 @@ class PianoRollFragment : Fragment() {
             updateButtonStates()
         }
 
+        settingsProjectDialogFragment.setListener(this)
+
         val menuButton = view.findViewById<ImageView>(R.id.pianoRollMenu) // Replace with your menu button ID
         menuButton.setOnClickListener { view ->
             val popupMenu = PopupMenu(context, view)
@@ -80,8 +84,7 @@ class PianoRollFragment : Fragment() {
                         true
                     }
                     R.id.action_project_settings -> {
-                        val bottomSheetDialog = SettingsProjectDialogFragment()
-                        bottomSheetDialog.show(parentFragmentManager, "ProjectSettingsBottomSheet")
+                        settingsProjectDialogFragment.show(parentFragmentManager, "ProjectSettingsBottomSheet")
                         true
                     }
                     else -> false
@@ -101,5 +104,9 @@ class PianoRollFragment : Fragment() {
             recordButton.alpha = 1f
             stopButton.alpha = 0.3f
         }
+    }
+
+    override fun onSettingsSaved(settingsData: Any) {
+
     }
 }

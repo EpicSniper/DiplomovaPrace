@@ -18,15 +18,5 @@ class PreferenceFragment : PreferenceFragmentCompat() {
         val entryValues = arrayOf("hodnota_1", "hodnota_2", "hodnota_3") // Odpovídající hodnoty
         listPreference?.entries = entries
         listPreference?.entryValues = entryValues
-
-        var sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
-        val frekvenceNotaA = sharedPreferences.getString("nota_a_frekvence", "440")?.toIntOrNull() ?: 440
-
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
-        val bpm = sharedPreferences.getString("bpm", "120")?.toIntOrNull() ?: 120
-
-        val sharedPreferences1 = PreferenceManager.getDefaultSharedPreferences(requireContext())
-        val numerator = sharedPreferences1.getInt("time_signature_numerator", 4)
-        val denominator = sharedPreferences1.getInt("time_signature_denominator", 4)
     }
 }
