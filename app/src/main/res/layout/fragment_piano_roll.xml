@@ -20,7 +20,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/constraintLayout2"
         android:layout_width="0dp"
-        android:layout_height="88dp"
+        android:layout_height="120dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
@@ -36,7 +36,7 @@
             app:layout_constraintStart_toStartOf="parent" />
 
         <ImageView
-            android:id="@+id/imageView3"
+            android:id="@+id/pianoRollMenu"
             android:layout_width="35dp"
             android:layout_height="35dp"
             android:layout_marginEnd="16dp"
@@ -46,17 +46,17 @@
             app:layout_constraintEnd_toEndOf="parent" />
 
         <ImageView
-            android:id="@+id/imageView4"
+            android:id="@+id/playButton"
             android:layout_width="55dp"
             android:layout_height="55dp"
             android:layout_marginEnd="8dp"
             android:layout_marginBottom="16dp"
             android:src="@drawable/play"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/imageView5" />
+            app:layout_constraintEnd_toStartOf="@+id/recordButton" />
 
         <ImageView
-            android:id="@+id/imageView5"
+            android:id="@+id/recordButton"
             android:layout_width="55dp"
             android:layout_height="55dp"
             android:layout_marginBottom="16dp"
@@ -66,14 +66,14 @@
             app:layout_constraintStart_toStartOf="parent" />
 
         <ImageView
-            android:id="@+id/imageView6"
+            android:id="@+id/stopButton"
             android:layout_width="55dp"
             android:layout_height="55dp"
             android:layout_marginStart="8dp"
             android:layout_marginBottom="16dp"
             android:src="@drawable/stop"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/imageView5" />
+            app:layout_constraintStart_toEndOf="@+id/recordButton" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

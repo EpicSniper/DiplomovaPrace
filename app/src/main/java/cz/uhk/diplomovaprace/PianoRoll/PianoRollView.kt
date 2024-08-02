@@ -1332,9 +1332,9 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             // left right
             selectedNotes[movingNoteIndex].start =
                 movingNoteStart + (convertEventX(eventX2) - convertEventX(eventX1)).toInt()
-            selectedNotes[movingNoteIndex].pitch =
-                (movingNotePitch + (convertEventY(eventY2) - convertEventY(eventY1))).toInt()
-                    .toByte()
+            if (selectedNotes[movingNoteIndex].start < 0) {
+                selectedNotes[movingNoteIndex].start = 0
+            }
             // up down
             val newPitch = heightToPitchConverter(convertEventY(eventY2))
             selectedNotes[movingNoteIndex].pitch = newPitch.toByte()

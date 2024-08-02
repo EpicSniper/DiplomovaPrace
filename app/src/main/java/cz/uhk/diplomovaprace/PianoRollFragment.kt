@@ -1,18 +1,19 @@
 package cz.uhk.diplomovaprace
 
+import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
-import android.view.SurfaceView
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.PopupMenu
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import cz.uhk.diplomovaprace.PianoRoll.PianoRollView
-import cz.uhk.diplomovaprace.Project.Project
 import cz.uhk.diplomovaprace.Project.ProjectViewModel
+import cz.uhk.diplomovaprace.Settings.SettingsBottomSheetDialogFragment
+import cz.uhk.diplomovaprace.Settings.SettingsProjectDialogFragment
 
 
 /**
@@ -41,38 +42,52 @@ class PianoRollFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val its = viewModel.selectedProject.value
-        // set the data for the piano roll view
         viewModel.selectedProject.observe(viewLifecycleOwner) { project ->
             pianoRollView.loadProject(project)
         }
 
-        // Get the buttons from the view
-        playButton = view.findViewById(R.id.imageView4)
-        recordButton = view.findViewById(R.id.imageView5)
-        stopButton = view.findViewById(R.id.imageView6)
+        playButton = view.findViewById(R.id.playButton)
+        recordButton = view.findViewById(R.id.recordButton)
+        stopButton = view.findViewById(R.id.stopButton)
 
         playButton.alpha = 1f
         recordButton.alpha = 1f
         stopButton.alpha = 0.3f
 
-        // Set the onClickListeners for the buttons
         playButton.setOnClickListener {
-            // Call the play function from PianoRollView
             pianoRollView.pushPlayButton()
             updateButtonStates()
         }
 
         recordButton.setOnClickListener {
-            // Call the record function from PianoRollView
             pianoRollView.pushRecordButton()
             updateButtonStates()
         }
 
         stopButton.setOnClickListener {
-            // Call the stop function from PianoRollView
             pianoRollView.pushStopButton()
             updateButtonStates()
+        }
+
+        val menuButton = view.findViewById<ImageView>(R.id.pianoRollMenu) // Replace with your menu button ID
+        menuButton.setOnClickListener { view ->
+            val popupMenu = PopupMenu(context, view)
+            popupMenu.inflate(R.menu.piano_roll_menu)
+            popupMenu.setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    R.id.action_save_project -> {
+                        pianoRollView.saveProject()
+                        true
+                    }
+                    R.id.action_project_settings -> {
+                        val bottomSheetDialog = SettingsProjectDialogFragment()
+                        bottomSheetDialog.show(parentFragmentManager, "ProjectSettingsBottomSheet")
+                        true
+                    }
+                    else -> false
+                }
+            }
+            popupMenu.show()
         }
     }
 
