@@ -1604,6 +1604,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         this.barLength = (upperTimeSignature / lowerTimeSignature) * 4 * beatLength
         this.tempo = project.getTempo()
         this.project = project
+        this.a4Height = project.getPitchOfA1().toFloat()
         val tracks = project.getTracks()
         if (tracks.isNotEmpty()) {
             activeTrack = tracks[0]
@@ -1665,5 +1666,15 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
         barLength = (upperTimeSignature / lowerTimeSignature) * 4 * beatLength
         redrawAll()
+    }
+
+    public fun getProjectSettings(): ProjectSettingsData {
+        return ProjectSettingsData(
+            "hodnota_1",    // TODO: algoritmus
+            a4Height.toInt(),
+            tempo,
+            upperTimeSignature.toInt(),
+            lowerTimeSignature.toInt()
+        )
     }
 }
