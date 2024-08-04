@@ -12,6 +12,28 @@ class Project {
     private var timeSignatureLower: Int = 4
     private var createdAt: String = LocalDateTime.now().toString()
     private var uuid: String = ""
+    private var algorithmType: String = "default"
+    private var pitchOfA1: Int = 440
+
+    fun getPitchOfA1(): Int {
+        return pitchOfA1
+    }
+
+    fun setPitchOfA1(newPitchOfA1: Int?) {
+        if (newPitchOfA1 != null) {
+            pitchOfA1 = newPitchOfA1
+        }
+    }
+
+    fun getAlgorithmType(): String {
+        return algorithmType
+    }
+
+    fun setAlgorithmType(newAlgorithmType: String?) {
+        if (newAlgorithmType != null) {
+            algorithmType = newAlgorithmType
+        }
+    }
 
     fun getUuid(): String {
         return uuid
@@ -61,23 +83,29 @@ class Project {
         return tempo
     }
 
-    fun setTempo(newTempo: Int) {
-        tempo = newTempo
+    fun setTempo(newTempo: Int?) {
+        if (newTempo != null) {
+            tempo = newTempo
+        }
     }
 
     fun getTimeSignatureUpper(): Int {
         return timeSignatureUpper
     }
 
-    fun setTimeSignatureUpper(newTimeSignatureUpper: Int) {
-        timeSignatureUpper = newTimeSignatureUpper
+    fun setTimeSignatureUpper(newTimeSignatureUpper: Int?) {
+        if (newTimeSignatureUpper != null) {
+            timeSignatureUpper = newTimeSignatureUpper
+        }
     }
 
     fun getTimeSignatureLower(): Int {
         return timeSignatureLower
     }
 
-    fun setTimeSignatureLower(newTimeSignatureLower: Int) {
-        timeSignatureLower = newTimeSignatureLower
+    fun setTimeSignatureLower(newTimeSignatureLower: Int?) {
+        if (newTimeSignatureLower != null) {
+            timeSignatureLower = newTimeSignatureLower
+        }
     }
 }

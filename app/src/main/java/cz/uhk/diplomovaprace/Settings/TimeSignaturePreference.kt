@@ -1,7 +1,8 @@
 package cz.uhk.diplomovaprace.Settings
 
 import android.content.Context
-oimport android.text.Editable
+import android.text.Editable
+
 import android.text.TextWatcher
 import android.util.AttributeSet
 import android.widget.EditText
@@ -14,6 +15,8 @@ class TimeSignaturePreference(context: Context, attrs: AttributeSet) : Preferenc
     private lateinit var timeSignatureTop: EditText
     private lateinit var timeSignatureBottom: EditText
 
+    private var projectSettingsData: ProjectSettingsData? = null
+
     init {
         // Inflate the layout here
         layoutResource = R.layout.pref_time_signature
@@ -25,8 +28,9 @@ class TimeSignaturePreference(context: Context, attrs: AttributeSet) : Preferenc
         timeSignatureTop = view.findViewById(R.id.timeSignatureTop)
         timeSignatureBottom = view.findViewById(R.id.timeSignatureBottom)
 
-        val numerator = sharedPreferences?.getInt("time_signature_numerator", 4)
-        val denominator = sharedPreferences?.getInt("time_signature_denominator", 4)
+        val numerator = projectSettingsData?.timeSignatureNumerator ?: sharedPreferences?.getInt("time_signature_numerator", 4)
+        val denominator = projectSettingsData?.timeSignatureDenominator ?: sharedPreferences?.getInt("time_signature_denominator", 4)
+
         timeSignatureTop.setText(numerator.toString())
         timeSignatureBottom.setText(denominator.toString())
 
@@ -67,6 +71,10 @@ class TimeSignaturePreference(context: Context, attrs: AttributeSet) : Preferenc
         editor?.putInt("time_signature_numerator", numerator)
         editor?.putInt("time_signature_denominator", denominator)
         editor?.apply()
+    }
+
+    public fun setProjectSettingsData(settings: ProjectSettingsData) {
+        this.projectSettingsData = settings
     }
 
     fun getTimeSignatureTop(): String = timeSignatureTop.text.toString()

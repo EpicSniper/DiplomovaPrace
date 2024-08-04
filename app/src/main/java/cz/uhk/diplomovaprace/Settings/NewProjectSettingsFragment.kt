@@ -33,7 +33,7 @@ class NewProjectSettingsFragment : Fragment(R.layout.fragment_new_project_settin
 
         view.findViewById<Button>(R.id.button3).setOnClickListener {
             val algorithmType =
-                preferenceFragment?.findPreference<ListPreference>("preference_key")?.value
+                preferenceFragment?.findPreference<ListPreference>("algorithm_type")?.value
             val pitchOfA1 =
                 preferenceFragment?.findPreference<EditTextPreference>("nota_a_frekvence")?.text?.toIntOrNull()
             val bpm =

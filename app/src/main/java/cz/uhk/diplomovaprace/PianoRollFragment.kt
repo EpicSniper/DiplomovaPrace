@@ -10,8 +10,10 @@ import android.widget.ImageView
 import android.widget.PopupMenu
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
+import androidx.preference.PreferenceManager
 import cz.uhk.diplomovaprace.PianoRoll.PianoRollView
 import cz.uhk.diplomovaprace.Project.ProjectViewModel
+import cz.uhk.diplomovaprace.Settings.ProjectSettingsData
 import cz.uhk.diplomovaprace.Settings.SettingsBottomSheetDialogFragment
 import cz.uhk.diplomovaprace.Settings.SettingsProjectDialogFragment
 
@@ -106,7 +108,27 @@ class PianoRollFragment : Fragment(), SettingsProjectDialogFragment.SettingsProj
         }
     }
 
-    override fun onSettingsSaved(settingsData: Any) {
+    private fun showSettingsDialog() {
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
+        val preferenceAlgorythm =  sharedPreferences.getString("algorithm_type", "hodnota_1")
+        val preferencePitchOfA1 = sharedPreferences.getString("nota_a_frekvence", "440")?.toInt()
+        val preferenceTempo = sharedPreferences.getString("tempo", "120")?.toInt()
+        val preferenceTimeSignatureUpper = sharedPreferences.getString("time_signature_upper", "4")?.toInt()
+        val preferenceTimeSignatureLower = sharedPreferences.getString("time_signature_lower", "4")?.toInt()
+        val projectSettings = ProjectSettingsData(
+            viewModel.selectedProject.value?.getAlgorithmType() ?: preferenceAlgorythm,
+            viewModel.selectedProject.value?.getPitchOfA1() ?: preferencePitchOfA1,
+            viewModel.selectedProject.value?.getTempo() ?: preferenceTempo,
+            viewModel.selectedProject.value?.getTimeSignatureUpper() ?: preferenceTimeSignatureUpper,
+            viewModel.selectedProject.value?.getTimeSignatureLower() ?: preferenceTimeSignatureLower
+        )
 
+        settingsProjectDialogFragment.setProjectSettings(projectSettings)
+        settingsProjectDialogFragment.setListener(this)
+        settingsProjectDialogFragment.show(parentFragmentManager, "ProjectSettingsBottomSheet")
+    }
+
+    override fun onSettingsSaved(projectSettingsData: ProjectSettingsData) {
+        pianoRollView.saveNewSettings(projectSettingsData)
     }
 }

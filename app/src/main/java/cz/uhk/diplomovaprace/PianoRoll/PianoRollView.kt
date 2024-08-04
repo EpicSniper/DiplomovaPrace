@@ -27,6 +27,7 @@ import org.jtransforms.fft.DoubleFFT_1D
 import kotlin.math.*
 import kotlin.math.pow
 import cz.uhk.diplomovaprace.Project.ProjectManager
+import cz.uhk.diplomovaprace.Settings.ProjectSettingsData
 
 class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(context, attrs),
     SurfaceHolder.Callback, OnGestureListener, ScaleGestureDetector.OnScaleGestureListener {
@@ -72,6 +73,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private var beatLength = 480
     private var barLength = (upperTimeSignature / lowerTimeSignature) * 4 * beatLength
     private var tempo = 60
+    private var a4Height = 442f
 
     private var project = Project()
     private var activeTrack = Track()
@@ -294,7 +296,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         midiCreator.addTrack(track)
         var midiData = midiCreator.createMidiData(context, 4, 4, tempo)
 
-        setHertzToNotes(442f)
+        setHertzToNotes(a4Height)
         onCreateTestFunction()
         canvas.restore()
         unlockCanvas(canvas)
@@ -1555,13 +1557,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         notes.add(note)
     }
 
-    /*public fun loadProject(newProject: Project) {
-        project = newProject
-        if (project.getTracks().count() > 0) {
-            notes = project.getTracks()[0].getNotes()
-        }
-    }*/
-
     public fun loadNewTrack(newTrack: Track) {
         activeTrack = newTrack
         loadActiveTrack()
@@ -1585,16 +1580,11 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         projectManager.saveProjectToFile(project, context)
     }
 
-    public fun loadProjects(): ArrayList<Project> {
-        val projectManager = ProjectManager()
-        val projects = projectManager.loadProjectsFromFile(context)
-        return projects
-    }
-
     public fun loadProject(project: Project) {
         clearAll()
         this.upperTimeSignature = project.getTimeSignatureUpper().toFloat()
         this.lowerTimeSignature = project.getTimeSignatureLower().toFloat()
+        this.barLength = (upperTimeSignature / lowerTimeSignature) * 4 * beatLength
         this.tempo = project.getTempo()
         this.project = project
         val tracks = project.getTracks()
@@ -1627,8 +1617,36 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         notes.clear()
         otherNotes.clear()
         selectedNotes.clear()
+        movingNoteIndex = -1
+        movingNote = false
         playingNotes.clear()
         project = Project()
         activeTrack = Track()
+        a4Height = 442f
+        tempo = 120
+        upperTimeSignature = 4f
+        lowerTimeSignature = 4f
+        barLength = (upperTimeSignature / lowerTimeSignature) * 4 * beatLength
+    }
+
+    public fun saveNewSettings(projectSettingsData: ProjectSettingsData) {
+        if (projectSettingsData.bpm != null) {
+            tempo = projectSettingsData.bpm
+        }
+
+        if (projectSettingsData.timeSignatureNumerator != null) {
+            upperTimeSignature = projectSettingsData.timeSignatureNumerator.toFloat()
+        }
+
+        if (projectSettingsData.timeSignatureDenominator != null) {
+            lowerTimeSignature = projectSettingsData.timeSignatureDenominator.toFloat()
+        }
+
+        if (projectSettingsData.pitchOfA1 != null) {
+            a4Height = projectSettingsData.pitchOfA1.toFloat()
+        }
+
+        barLength = (upperTimeSignature / lowerTimeSignature) * 4 * beatLength
+        redrawAll()
     }
 }

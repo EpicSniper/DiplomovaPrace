@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 class Track(
     private var notes: ArrayList<Note> = ArrayList(),
     private var start: Int = 0,
-    private var name: String = "",
+    private var name: String = "New track",
     private var audioFile: String? = null
 ) {
 
