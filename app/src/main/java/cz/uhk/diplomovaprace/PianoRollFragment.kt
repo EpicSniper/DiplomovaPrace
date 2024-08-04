@@ -1,7 +1,6 @@
 package cz.uhk.diplomovaprace
 
 import ProjectSettingsFragment
-import android.content.Intent
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -12,11 +11,9 @@ import android.widget.PopupMenu
 import androidx.activity.addCallback
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
-import androidx.preference.PreferenceManager
 import cz.uhk.diplomovaprace.PianoRoll.PianoRollView
 import cz.uhk.diplomovaprace.Project.ProjectViewModel
 import cz.uhk.diplomovaprace.Settings.ProjectSettingsData
-import cz.uhk.diplomovaprace.Settings.SettingsBottomSheetDialogFragment
 
 
 /**
@@ -32,6 +29,8 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
     private lateinit var playButton: ImageView
     private lateinit var recordButton: ImageView
     private lateinit var stopButton: ImageView
+    private lateinit var deleteEditedButton: ImageView
+    private lateinit var cancelEditButton: ImageView
 
     private val viewModel: ProjectViewModel by activityViewModels()
 
@@ -51,27 +50,33 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
             pianoRollView.loadProject(project)
         }
 
+        pianoRollView.setFragment(this)
+
         playButton = view.findViewById(R.id.playButton)
         recordButton = view.findViewById(R.id.recordButton)
         stopButton = view.findViewById(R.id.stopButton)
+        deleteEditedButton = view.findViewById(R.id.deleteEditedButton)
+        cancelEditButton = view.findViewById(R.id.cancelEditButton)
 
         playButton.alpha = 1f
         recordButton.alpha = 1f
         stopButton.alpha = 0.3f
+        deleteEditedButton.alpha = 0.3f
+        cancelEditButton.alpha = 0.3f
 
         playButton.setOnClickListener {
             pianoRollView.pushPlayButton()
-            updateButtonStates()
+            updateRecordButtonStates()
         }
 
         recordButton.setOnClickListener {
             pianoRollView.pushRecordButton()
-            updateButtonStates()
+            updateRecordButtonStates()
         }
 
         stopButton.setOnClickListener {
             pianoRollView.pushStopButton()
-            updateButtonStates()
+            updateRecordButtonStates()
         }
 
         projectSettingsFragment.setListener(this)
@@ -99,12 +104,21 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
             popupMenu.show()
         }
 
+        deleteEditedButton.setOnClickListener {
+            pianoRollView.deleteEditedNotes()
+        }
+
+        cancelEditButton.setOnClickListener {
+            pianoRollView.cancelEditing()
+            updateEditButtonStates()
+        }
+
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
             findNavController().navigate(R.id.mainMenuFragment)
         }
     }
 
-    private fun updateButtonStates() {
+    private fun updateRecordButtonStates() {
         if (pianoRollView.isPlaying || pianoRollView.isRecording) {
             playButton.alpha = 0.3f
             recordButton.alpha = 0.3f
@@ -114,6 +128,22 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
             recordButton.alpha = 1f
             stopButton.alpha = 0.3f
         }
+    }
+
+    private fun updateEditButtonStates() {
+        if (pianoRollView.isEditing) {
+            deleteEditedButton.alpha = 1f
+            cancelEditButton.alpha = 1f
+
+        } else {
+            deleteEditedButton.alpha = 0.3f
+            cancelEditButton.alpha = 0.3f
+        }
+    }
+
+    public fun updateButtons() {
+        updateRecordButtonStates()
+        updateEditButtonStates()
     }
 
     override fun onSettingsSaved(projectSettingsData: ProjectSettingsData) {

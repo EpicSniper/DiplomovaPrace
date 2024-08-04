@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat
 import cz.uhk.diplomovaprace.PianoRoll.Midi.MidiCreator
 import cz.uhk.diplomovaprace.PianoRoll.Midi.MidiFactory
 import cz.uhk.diplomovaprace.PianoRoll.Midi.MidiPlayer
+import cz.uhk.diplomovaprace.PianoRollFragment
 import cz.uhk.diplomovaprace.Project.Project
 import cz.uhk.diplomovaprace.Project.Track
 import cz.uhk.diplomovaprace.R
@@ -31,6 +32,8 @@ import cz.uhk.diplomovaprace.Settings.ProjectSettingsData
 
 class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(context, attrs),
     SurfaceHolder.Callback, OnGestureListener, ScaleGestureDetector.OnScaleGestureListener {
+
+    private lateinit var fragment: PianoRollFragment
 
     private var paint = Paint()
     private var notes = ArrayList<Note>()
@@ -92,7 +95,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private var noteHeights = ArrayList<Float>()
     private var randomCounter = 0
 
-    private var isEditing = false
+    var isEditing = false
 
     init {
         paint.color = Color.YELLOW
@@ -252,6 +255,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private fun redrawAll() {
         var canvas = lockCanvas()
         canvas.save()
+
+        updateButtonsInFragment()
 
         checkBorders()                                      // two times checkBorders, because of clipping out
         widthDifference = width - (width / scaleFactorX)
@@ -1647,6 +1652,19 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         barLength = (upperTimeSignature / lowerTimeSignature) * 4 * beatLength
     }
 
+    public fun deleteEditedNotes() {
+        notes.removeAll(selectedNotes)
+        selectedNotes.clear()
+        isEditing = false
+        redrawAll()
+    }
+
+    public fun cancelEditing() {
+        selectedNotes.clear()
+        isEditing = false
+        redrawAll()
+    }
+
     public fun saveNewSettings(projectSettingsData: ProjectSettingsData) {
         if (projectSettingsData.bpm != null) {
             tempo = projectSettingsData.bpm
@@ -1679,5 +1697,13 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             lowerTimeSignature.toInt(),
             project.getName()
         )
+    }
+
+    private fun updateButtonsInFragment() {
+        fragment.updateButtons()
+    }
+
+    public fun setFragment(fragment: PianoRollFragment) {
+        this.fragment = fragment
     }
 }
