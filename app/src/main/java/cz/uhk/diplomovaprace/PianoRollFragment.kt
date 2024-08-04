@@ -13,7 +13,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import cz.uhk.diplomovaprace.PianoRoll.PianoRollView
 import cz.uhk.diplomovaprace.Project.ProjectViewModel
-import cz.uhk.diplomovaprace.Settings.ProjectSettingFragment
 import cz.uhk.diplomovaprace.Settings.ProjectSettingsData
 import cz.uhk.diplomovaprace.Settings.SettingsBottomSheetDialogFragment
 import cz.uhk.diplomovaprace.Settings.SettingsProjectDialogFragment
