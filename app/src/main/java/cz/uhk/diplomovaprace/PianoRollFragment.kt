@@ -1,5 +1,6 @@
 package cz.uhk.diplomovaprace
 
+import ProjectSettingsFragment
 import android.content.Intent
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -15,7 +16,6 @@ import cz.uhk.diplomovaprace.PianoRoll.PianoRollView
 import cz.uhk.diplomovaprace.Project.ProjectViewModel
 import cz.uhk.diplomovaprace.Settings.ProjectSettingsData
 import cz.uhk.diplomovaprace.Settings.SettingsBottomSheetDialogFragment
-import cz.uhk.diplomovaprace.Settings.SettingsProjectDialogFragment
 
 
 /**
@@ -23,9 +23,9 @@ import cz.uhk.diplomovaprace.Settings.SettingsProjectDialogFragment
  * Use the [PianoRollFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
-class PianoRollFragment : Fragment(), SettingsProjectDialogFragment.SettingsProjectDialogListener {
+class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDialogListener {
 
-    private val settingsProjectDialogFragment = SettingsProjectDialogFragment()
+    private var projectSettingsFragment = ProjectSettingsFragment()
 
     private lateinit var pianoRollView: PianoRollView
     private lateinit var playButton: ImageView
@@ -73,7 +73,7 @@ class PianoRollFragment : Fragment(), SettingsProjectDialogFragment.SettingsProj
             updateButtonStates()
         }
 
-        settingsProjectDialogFragment.setListener(this)
+        projectSettingsFragment.setListener(this)
 
         val menuButton = view.findViewById<ImageView>(R.id.pianoRollMenu) // Replace with your menu button ID
         menuButton.setOnClickListener { view ->
@@ -86,7 +86,10 @@ class PianoRollFragment : Fragment(), SettingsProjectDialogFragment.SettingsProj
                         true
                     }
                     R.id.action_project_settings -> {
-                        settingsProjectDialogFragment.show(parentFragmentManager, "ProjectSettingsBottomSheet")
+                        val projectSettingsData = pianoRollView.getProjectSettings()
+                        projectSettingsFragment = ProjectSettingsFragment.newInstance(projectSettingsData)
+                        projectSettingsFragment.setListener(this)
+                        projectSettingsFragment.show(parentFragmentManager, "project_settings")
                         true
                     }
                     else -> false

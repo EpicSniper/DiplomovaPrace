@@ -1664,6 +1664,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             a4Height = projectSettingsData.pitchOfA1.toFloat()
         }
 
+        projectSettingsData.projectName?.let { project.setName(it) }
+
         barLength = (upperTimeSignature / lowerTimeSignature) * 4 * beatLength
         redrawAll()
     }
@@ -1674,7 +1676,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             a4Height.toInt(),
             tempo,
             upperTimeSignature.toInt(),
-            lowerTimeSignature.toInt()
+            lowerTimeSignature.toInt(),
+            project.getName()
         )
     }
 }

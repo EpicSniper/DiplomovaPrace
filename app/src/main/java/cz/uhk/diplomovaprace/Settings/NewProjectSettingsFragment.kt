@@ -48,6 +48,8 @@ class NewProjectSettingsFragment : Fragment(R.layout.fragment_new_project_settin
             newProject.setTimeSignatureLower(timeSignatureBottom ?: 4)
             newProject.setTimeSignatureUpper(timeSignatureTop ?: 4)
             newProject.setTempo(bpm ?: 120)
+            newProject.setPitchOfA1(pitchOfA1 ?: 440)
+            newProject.setAlgorithmType(algorithmType ?: "hodnota_1")
             viewModel.selectProject(newProject)
 
             findNavController().navigate(R.id.action_newProjectSettingsFragment_to_pianoRollFragment)
