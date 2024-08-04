@@ -599,6 +599,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         paint.strokeWidth = 0f
     }
 
+    // TODO: debug funkce
     private fun drawRecordingLine(canvas: Canvas) {
         if (recordingLineTime.size >= recordingLineAutocorrelation.size) {
             for (i in 0 until recordingLineAutocorrelation.size) {
@@ -704,37 +705,54 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         var topOfTheLine = top
         var upperColor = ContextCompat.getColor(context, R.color.pinkie)
         var bottomColor = ContextCompat.getColor(context, R.color.pianorollline)
-        val upperLineThickness = 4f
-        val bottomLineThickness = 2f
+        val upperLineThickness = 16f
+        val bottomLineThickness = 8f
 
         paint.textScaleX = scaleFactorY / scaleFactorX
         val barNumberCorrection = 1 - (pianoKeyWidth / barLength).toInt()
         var textCorrectionX = actualTime
         var barNumberWidth = 0f
         var barNumber = "1"
+        val sixteenthInBar = (barLength / beatLength * 4f).toInt()
+        var converter = 0
+        val modifier = if (sixteenthInBar < 16) sixteenthInBar else 16
         do {
             var renderLines = true
+
             barNumber = ((actualTime / barLength).toInt() + barNumberCorrection).toString()
             // vykreslit vsechny cary
-            when (sixteenthLengths % 16) {
+
+            converter = sixteenthLengths % modifier
+            println("$converter + $sixteenthLengths")
+            when (converter % modifier) {
                 0 -> {
-                    topOfTheLine = top + (timelineHeight / 16f * 8f)
-                    upperColor = ContextCompat.getColor(context, R.color.text1)
-                    bottomColor = ContextCompat.getColor(context, R.color.pianorollline)
-                    paint.textSize = timelineHeight / 4f
-                    paint.color = upperColor
-                    barNumberWidth = paint.measureText(barNumber)
-                    if (barNumber == "1") {
-                        textCorrectionX = barNumberWidth / 2f
+                    if (sixteenthLengths % sixteenthInBar != 0) {
+                        if (scaleFactorX > 0.08f) {
+                            topOfTheLine = top + (timelineHeight / 16f * 10f)
+                            upperColor = ContextCompat.getColor(context, R.color.text1)
+                            bottomColor = ContextCompat.getColor(context, R.color.pianorollline)
+                        } else {
+                            renderLines = false
+                        }
                     } else {
-                        textCorrectionX = -barNumberWidth / 2f
+                        topOfTheLine = top + (timelineHeight / 16f * 8f)
+                        upperColor = ContextCompat.getColor(context, R.color.text1)
+                        bottomColor = ContextCompat.getColor(context, R.color.pianorollline)
+                        paint.textSize = timelineHeight / 4f
+                        paint.color = upperColor
+                        barNumberWidth = paint.measureText(barNumber)
+                        if (barNumber == "1") {
+                            textCorrectionX = barNumberWidth / 2f
+                        } else {
+                            textCorrectionX = -barNumberWidth / 2f
+                        }
+                        canvas.drawText(
+                            barNumber,
+                            actualTime + textCorrectionX,
+                            top + timelineHeight / 4f,
+                            paint
+                        )
                     }
-                    canvas.drawText(
-                        barNumber,
-                        actualTime + textCorrectionX,
-                        top + timelineHeight / 4f,
-                        paint
-                    )
                 }
 
                 1, 3, 5, 7, 9, 11, 13, 15 -> {
@@ -765,7 +783,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
                     } else {
                         renderLines = false
                     }
-
                 }
 
                 8 -> {
