@@ -23,6 +23,7 @@
         android:layout_height="144dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent">
 
         <View
@@ -38,7 +39,7 @@
             android:layout_width="37dp"
             android:layout_height="35dp"
             android:layout_marginEnd="16dp"
-            android:layout_marginBottom="18dp"
+            android:layout_marginBottom="8dp"
             android:src="@drawable/back"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/playButton" />
@@ -88,7 +89,7 @@
             android:layout_width="37dp"
             android:layout_height="35dp"
             android:layout_marginStart="16dp"
-            android:layout_marginBottom="18dp"
+            android:layout_marginBottom="8dp"
             android:rotation="180"
             android:src="@drawable/back"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -113,6 +114,26 @@
             app:layout_constraintBottom_toTopOf="@+id/view2"
             app:layout_constraintStart_toEndOf="@+id/deleteEditedButton"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/createButton"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:layout_marginStart="16dp"
+            android:src="@drawable/new_file"
+            app:layout_constraintBottom_toTopOf="@+id/view2"
+            app:layout_constraintStart_toEndOf="@+id/cancelEditButton"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/textView10"
+            android:layout_width="181dp"
+            android:layout_height="wrap_content"
+            android:text="TextView"
+            app:layout_constraintBottom_toTopOf="@+id/recordButton"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/view2" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

@@ -95,7 +95,12 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private var noteHeights = ArrayList<Float>()
     private var randomCounter = 0
 
-    var isEditing = false
+    public var isEditing = false
+    public var isCreating = false
+    private var creatingNoteStart = 0f
+    private var creatingNotePitch = 0
+    private var creatingNoteDuration = 0f
+    private var creatingNote = false
 
     init {
         paint.color = Color.YELLOW
@@ -174,6 +179,11 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         scaleGestureDetector.onTouchEvent(event)
         if (!isPlaying || !isRecording) {
             redrawAll()
+        }
+
+        if (isCreating && creatingNote && event.action == MotionEvent.ACTION_UP) {
+            creatingNote = false
+            createNewNote()
         }
 
         return true
@@ -257,6 +267,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         canvas.save()
 
         updateButtonsInFragment()
+        println(isCreating)
 
         checkBorders()                                      // two times checkBorders, because of clipping out
         widthDifference = width - (width / scaleFactorX)
@@ -728,7 +739,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             // vykreslit vsechny cary
 
             converter = sixteenthLengths % modifier
-            println("$converter + $sixteenthLengths")
             when (converter % modifier) {
                 0 -> {
                     if (sixteenthLengths % sixteenthInBar != 0) {
@@ -1393,9 +1403,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     override fun onDown(event: MotionEvent): Boolean {
-        println("------- ON DOWN -------")
-        println("X: " + event.x + " |Y: " + event.y)
-
+        /*println("------- ON DOWN -------")
+        println("X: " + event.x + " |Y: " + event.y)*/
         onDownEvent(event.x, event.y)
         return true
     }
@@ -1421,12 +1430,31 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         distanceX: Float,
         distanceY: Float
     ): Boolean {
-        println("------- ON SCROLL -------")
+        /*println("------- ON SCROLL -------")
         if (event1 != null) {
             println("DOWN - X: " + event1.x + " |Y: " + event1.y)
         }
         println("DOWN - X: " + event2.x + " |Y: " + event2.y)
-        println("DISTANCE - X: " + distanceX + " |Y: " + distanceY)
+        println("DISTANCE - X: " + distanceX + " |Y: " + distanceY)*/
+
+        if (isCreating && !creatingNote) {
+            if (event1 != null) {
+                creatingNoteStart = convertEventX(event1.x) - pianoKeyWidth
+                println(convertEventX(event1.x).toString() + " | " + event1.x)
+
+            }
+            if (event1 != null) {
+                creatingNotePitch = heightToPitchConverter(convertEventY(event1.y))
+            }
+            creatingNote = true
+        }
+
+        if (creatingNote) {
+            creatingNoteDuration = (convertEventX(event2.x) - pianoKeyWidth - creatingNoteStart)
+            if (creatingNoteDuration < 0) {
+                creatingNoteDuration = 0f
+            }
+        }
 
         if (!movingNote && isEditing) {
             selectedNotes.forEachIndexed { index, it ->
@@ -1441,7 +1469,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             }
         }
 
-        if (!scaling && !movingTimeLine && !movingNote) {
+        if (!scaling && !movingTimeLine && !movingNote && !creatingNote) {
             scrollX += distanceX / scaleFactorX
             scrollY += distanceY / scaleFactorY
         }
@@ -1665,6 +1693,31 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         redrawAll()
     }
 
+    private fun createNewNote() {
+        if (creatingNoteDuration == 0f) {
+            return
+        }
+
+        val rectF = getRectFromNoteInfo(
+            creatingNotePitch.toByte(),
+            creatingNoteStart.toInt(),
+            creatingNoteDuration.toInt()
+        )
+
+        val newNote = Note(
+            creatingNotePitch.toByte(),
+            creatingNoteStart.toInt(),
+            creatingNoteDuration.toInt(),
+            rectF.left,
+            rectF.top,
+            rectF.right,
+            rectF.bottom
+        )
+
+        notes.add(newNote)
+        redrawAll()
+    }
+
     public fun saveNewSettings(projectSettingsData: ProjectSettingsData) {
         if (projectSettingsData.bpm != null) {
             tempo = projectSettingsData.bpm
@@ -1705,5 +1758,17 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
     public fun setFragment(fragment: PianoRollFragment) {
         this.fragment = fragment
+    }
+
+    public fun startCreatingNotes() {
+        cancelEditing()
+        selectedNotes.clear()
+        isCreating = true
+        redrawAll()
+    }
+
+    public fun stopCreatingNotes() {
+        isCreating = false
+        redrawAll()
     }
 }

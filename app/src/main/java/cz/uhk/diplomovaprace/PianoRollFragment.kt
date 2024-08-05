@@ -31,6 +31,7 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
     private lateinit var stopButton: ImageView
     private lateinit var deleteEditedButton: ImageView
     private lateinit var cancelEditButton: ImageView
+    private lateinit var createButton: ImageView
 
     private val viewModel: ProjectViewModel by activityViewModels()
 
@@ -57,12 +58,14 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
         stopButton = view.findViewById(R.id.stopButton)
         deleteEditedButton = view.findViewById(R.id.deleteEditedButton)
         cancelEditButton = view.findViewById(R.id.cancelEditButton)
+        createButton = view.findViewById(R.id.createButton)
 
         playButton.alpha = 1f
         recordButton.alpha = 1f
         stopButton.alpha = 0.3f
         deleteEditedButton.alpha = 0.3f
         cancelEditButton.alpha = 0.3f
+        createButton.alpha = 1f
 
         playButton.setOnClickListener {
             pianoRollView.pushPlayButton()
@@ -113,6 +116,14 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
             updateEditButtonStates()
         }
 
+        createButton.setOnClickListener {
+            if (pianoRollView.isCreating) {
+                stopCreatingNotes()
+            } else {
+                startCreatingNotes()
+            }
+        }
+
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
             findNavController().navigate(R.id.mainMenuFragment)
         }
@@ -144,6 +155,16 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
     public fun updateButtons() {
         updateRecordButtonStates()
         updateEditButtonStates()
+    }
+
+    private fun startCreatingNotes() {
+        createButton.alpha = 0.3f
+        pianoRollView.startCreatingNotes()
+    }
+
+    private fun stopCreatingNotes() {
+        createButton.alpha = 1f
+        pianoRollView.stopCreatingNotes()
     }
 
     override fun onSettingsSaved(projectSettingsData: ProjectSettingsData) {
