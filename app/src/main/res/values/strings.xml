@@ -17,16 +17,4 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="title_activity_main">MainActivity</string>
 
-    <string-array name="entries">
-        <item>Možnost 1</item>
-        <item>Možnost 2</item>
-        <item>Možnost 3</item>
-    </string-array>
-
-    <string-array name="entry_values">
-        <item>hodnota_1</item>
-        <item>hodnota_2</item>
-        <item>hodnota_3</item>
-    </string-array>
-
 </resources>

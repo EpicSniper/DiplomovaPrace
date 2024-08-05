@@ -9,6 +9,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import cz.uhk.diplomovaprace.R
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
+import cz.uhk.diplomovaprace.PitchDetectionMethod
 import cz.uhk.diplomovaprace.Project.Project
 import cz.uhk.diplomovaprace.Settings.ProjectSettingsData
 import kotlinx.serialization.decodeFromString
@@ -92,7 +93,7 @@ class ProjectSettingsFragment : BottomSheetDialogFragment() {
         saveButton.setOnClickListener {
             // 1. Gather the settings data from the dialog's UI elements
             val projectSettingsData = ProjectSettingsData(
-                algorithmType = "hodnota_1",
+                algorithmType = PitchDetectionMethod.AUTOCORRELATION.name,
                 pitchOfA1 = pitchView.text.toString().toInt(),
                 bpm = bpmView.text.toString().toInt(),
                 timeSignatureNumerator = timeSignatureNumeratorView.text.toString().toInt(),

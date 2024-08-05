@@ -5,9 +5,7 @@
 
     <ListPreference
         android:key="algorithm_type"
-        android:title="Algorythm type"
-        android:entries="@array/entries"
-        android:entryValues="@array/entry_values"
+        android:title="Algorithm type"
         app:useSimpleSummaryProvider="true" />
 
     <cz.uhk.diplomovaprace.Settings.NumericEditTextPreference

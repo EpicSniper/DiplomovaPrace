@@ -14,8 +14,8 @@ class PreferenceFragment : PreferenceFragmentCompat() {
         setPreferencesFromResource(R.xml.preferences, rootKey)
 
         val listPreference = findPreference<ListPreference>("algorithm_type")
-        val entries = arrayOf("Možnost 1", "Možnost 2", "Možnost 3") // Vaše hodnoty
-        val entryValues = arrayOf("hodnota_1", "hodnota_2", "hodnota_3") // Odpovídající hodnoty
+        val entries = arrayOf(PitchDetectionMethod.AUTOCORRELATION.method, PitchDetectionMethod.HPS.method)
+        val entryValues = arrayOf(PitchDetectionMethod.AUTOCORRELATION.name, PitchDetectionMethod.HPS.name)
         listPreference?.entries = entries
         listPreference?.entryValues = entryValues
     }
