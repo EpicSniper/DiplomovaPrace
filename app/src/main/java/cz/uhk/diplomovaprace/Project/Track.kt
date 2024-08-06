@@ -48,6 +48,10 @@ class Track(
         notes.add(note)
     }
 
+    fun addNotes(newNotes: ArrayList<Note>) {
+        notes.addAll(newNotes)
+    }
+
     fun removeNote(note: Note) {
         notes.remove(note)
     }

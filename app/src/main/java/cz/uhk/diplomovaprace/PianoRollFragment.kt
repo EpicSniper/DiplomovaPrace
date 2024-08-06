@@ -6,11 +6,19 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.PopupMenu
+import android.widget.TextView
 import androidx.activity.addCallback
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import cz.uhk.diplomovaprace.PianoRoll.PianoRollView
 import cz.uhk.diplomovaprace.Project.ProjectViewModel
 import cz.uhk.diplomovaprace.Settings.ProjectSettingsData
@@ -32,6 +40,12 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
     private lateinit var deleteEditedButton: ImageView
     private lateinit var cancelEditButton: ImageView
     private lateinit var createButton: ImageView
+    private lateinit var nextTrackButton: ImageView
+    private lateinit var previousTrackButton: ImageView
+    private lateinit var deleteTrackButton: ImageView
+    private lateinit var editTrackNameButton: ImageView
+    private lateinit var activeTrackName: TextView
+    private var activeTrackIndex = -1
 
     private val viewModel: ProjectViewModel by activityViewModels()
 
@@ -59,13 +73,24 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
         deleteEditedButton = view.findViewById(R.id.deleteEditedButton)
         cancelEditButton = view.findViewById(R.id.cancelEditButton)
         createButton = view.findViewById(R.id.createButton)
+        nextTrackButton = view.findViewById(R.id.nextTrackButton)
+        previousTrackButton = view.findViewById(R.id.previousTrackButton)
+        deleteTrackButton = view.findViewById(R.id.deleteTrackButton)
+        editTrackNameButton = view.findViewById(R.id.editTrackNameButton)
+        activeTrackName = view.findViewById(R.id.activeTrackName)
 
         playButton.alpha = 1f
         recordButton.alpha = 1f
         stopButton.alpha = 0.3f
         deleteEditedButton.alpha = 0.3f
         cancelEditButton.alpha = 0.3f
-        createButton.alpha = 1f
+        createButton.alpha = 0.3f
+        nextTrackButton.alpha = 0.3f
+        previousTrackButton.alpha = 0.3f
+        deleteTrackButton.alpha = 0.3f
+        editTrackNameButton.alpha = 0.3f
+
+        setActiveTrackName()
 
         playButton.setOnClickListener {
             pianoRollView.pushPlayButton()
@@ -84,7 +109,8 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
 
         projectSettingsFragment.setListener(this)
 
-        val menuButton = view.findViewById<ImageView>(R.id.pianoRollMenu) // Replace with your menu button ID
+        val menuButton =
+            view.findViewById<ImageView>(R.id.pianoRollMenu) // Replace with your menu button ID
         menuButton.setOnClickListener { view ->
             val popupMenu = PopupMenu(context, view)
             popupMenu.inflate(R.menu.piano_roll_menu)
@@ -94,13 +120,16 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
                         pianoRollView.saveProject()
                         true
                     }
+
                     R.id.action_project_settings -> {
                         val projectSettingsData = pianoRollView.getProjectSettings()
-                        projectSettingsFragment = ProjectSettingsFragment.newInstance(projectSettingsData)
+                        projectSettingsFragment =
+                            ProjectSettingsFragment.newInstance(projectSettingsData)
                         projectSettingsFragment.setListener(this)
                         projectSettingsFragment.show(parentFragmentManager, "project_settings")
                         true
                     }
+
                     else -> false
                 }
             }
@@ -117,16 +146,60 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
         }
 
         createButton.setOnClickListener {
-            if (pianoRollView.isCreating) {
-                stopCreatingNotes()
+            if (activeTrackIndex == -1) {
+                createButton.alpha = 0.3f
             } else {
-                startCreatingNotes()
+                if (pianoRollView.isCreating) {
+                    stopCreatingNotes()
+                } else {
+                    startCreatingNotes()
+                }
             }
+        }
+
+        nextTrackButton.setOnClickListener {
+            pianoRollView.nextTrack()
+            setActiveTrackName()
+        }
+
+        previousTrackButton.setOnClickListener {
+            pianoRollView.previousTrack()
+            setActiveTrackName()
+        }
+
+        deleteTrackButton.setOnClickListener {
+            pianoRollView.deleteActiveTrack()
+            setActiveTrackName()
+        }
+
+        editTrackNameButton.setOnClickListener {
+            val dialogView =
+                LayoutInflater.from(context).inflate(R.layout.edit_property_dialog, null)
+            val inputEditText = dialogView.findViewById<TextInputEditText>(R.id.propertyValueInput)
+            inputEditText.setText(pianoRollView.getActiveTrackName())
+
+            context?.let { it1 ->
+                MaterialAlertDialogBuilder(it1)
+                    .setTitle("Edit track name")
+                    .setView(dialogView)
+                    .setPositiveButton("Edit") { dialog, _ ->
+                        val newTrackName = inputEditText.text.toString()
+                        pianoRollView.setActiveTrackName(newTrackName)
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+            }
+
+            setActiveTrackName()
         }
 
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
             findNavController().navigate(R.id.mainMenuFragment)
         }
+    }
+
+    private fun setActiveTrackName() {
+        activeTrackName.text = pianoRollView.getActiveTrackName()
     }
 
     private fun updateRecordButtonStates() {
@@ -145,16 +218,49 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
         if (pianoRollView.isEditing) {
             deleteEditedButton.alpha = 1f
             cancelEditButton.alpha = 1f
-
         } else {
             deleteEditedButton.alpha = 0.3f
             cancelEditButton.alpha = 0.3f
         }
+
+        if (pianoRollView.isCreating || activeTrackIndex == -1) {
+            createButton.alpha = 0.3f
+        } else {
+            createButton.alpha = 1f
+        }
     }
 
     public fun updateButtons() {
+        activeTrackIndex = pianoRollView.getActiveTrackIndex()
         updateRecordButtonStates()
         updateEditButtonStates()
+        updateTrackButtons()
+    }
+
+    private fun updateTrackButtons() {
+        if (pianoRollView.canGoToNextTrack()) {
+            nextTrackButton.alpha = 1f
+        } else {
+            nextTrackButton.alpha = 0.3f
+        }
+
+        if (pianoRollView.canGoToPreviousTrack()) {
+            previousTrackButton.alpha = 1f
+        } else {
+            previousTrackButton.alpha = 0.3f
+        }
+
+        if (pianoRollView.canDeleteActiveTrack()) {
+            deleteTrackButton.alpha = 1f
+        } else {
+            deleteTrackButton.alpha = 0.3f
+        }
+
+        if (pianoRollView.canEditActiveTrackName()) {
+            editTrackNameButton.alpha = 1f
+        } else {
+            editTrackNameButton.alpha = 0.3f
+        }
     }
 
     private fun startCreatingNotes() {
