@@ -30,6 +30,8 @@ import kotlin.math.*
 import kotlin.math.pow
 import cz.uhk.diplomovaprace.Project.ProjectManager
 import cz.uhk.diplomovaprace.Settings.ProjectSettingsData
+import java.io.File
+import java.util.UUID
 
 class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(context, attrs),
     SurfaceHolder.Callback, OnGestureListener, ScaleGestureDetector.OnScaleGestureListener {
@@ -94,7 +96,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private var recordingLineTime = ArrayList<Float>()
     private var recordingLineAutocorrelation = ArrayList<Double>()
     private var noteHeights = ArrayList<Float>()
-    private var randomCounter = 0
+    private var recordedTrackUuid = ""
 
     public var isEditing = false
     public var isCreating = false
@@ -226,8 +228,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         currentTime = System.currentTimeMillis()
 
         isRecording = false
-        randomCounter = 0
-
         isEditing = false
 
         rectFArrayListInicialization()
@@ -450,7 +450,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
                 if (activeSnap == noteSnap) {
                     lengthsInSnap[note] += noteLength
                 } else {
-                    var remainingLength = getSnapLength() - (recordingLineTime[i - 1] % getSnapLength()).toInt()
+                    var remainingLength =
+                        getSnapLength() - (recordingLineTime[i - 1] % getSnapLength()).toInt()
                     lengthsInSnap[note] += noteLength
 
                     // zjisti největší číslo v lengthsInSnap a zjisti jeho index
@@ -536,6 +537,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
         val newTrack = Track()
         newTrack.addNotes(newNotes)
+        newTrack.setAudioFile(recordedTrackUuid)
 
         // add new track to project and set it as active track
         project.addTrack(newTrack)
@@ -856,10 +858,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     private fun drawNotes(canvas: Canvas) {
-        drawActiveNotes(canvas)
-
         drawOtherTrackNotes(canvas)
-
+        drawActiveNotes(canvas)
         if (creatingNote) {
             drawCreatingNote(canvas)
         }
@@ -1125,7 +1125,13 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     private fun playNotes() {
-        activeTrack.getNotes().forEach {
+        project.getTracks().forEach {
+            playNotesInTrack(it)
+        }
+    }
+
+    private fun playNotesInTrack(track: Track) {
+        track.getNotes().forEach {
             if (lineOnTime >= it.start) {
                 if (playingNotes.contains(it)) {
                     if (lineOnTime > it.start + it.duration) {
@@ -1343,7 +1349,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
         if (isCreating && !creatingNote) {
             if (event1 != null) {
-                creatingNoteStart = snapNote((convertEventX(event1.x) - pianoKeyWidth).toInt()).toFloat()
+                creatingNoteStart =
+                    snapNote((convertEventX(event1.x) - pianoKeyWidth).toInt()).toFloat()
             }
             if (event1 != null) {
                 creatingNotePitch = heightToPitchConverter(convertEventY(event1.y))
@@ -1352,7 +1359,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         }
 
         if (creatingNote) {
-            creatingNoteDuration = snapNote((convertEventX(event2.x) - pianoKeyWidth - creatingNoteStart).toInt()).toFloat()
+            creatingNoteDuration =
+                snapNote((convertEventX(event2.x) - pianoKeyWidth - creatingNoteStart).toInt()).toFloat()
             if (creatingNoteDuration < 0) {
                 creatingNoteDuration = 0f
             }
@@ -1540,7 +1548,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         activeTrack = Track()
         activeTrackIndex = -1
         project = Project()
-        project.addTrack(activeTrack)
         a4Height = 442f
         tempo = 120
         upperTimeSignature = 4f
@@ -1649,7 +1656,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     private fun getSnapLength(): Int {
-        return 480
+        return 120
     }
 
     public fun setPitchDetectionMethod(method: PitchDetectionMethod) {
@@ -1682,7 +1689,10 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         val tracks = project.getTracks()
         val index = tracks.indexOf(activeTrack)
         if (tracks.size == 1) {
-            clearAll()
+            tracks.clear()
+            activeTrack = Track()
+            activeTrackIndex = -1
+            redrawAll()
             return
         }
 
@@ -1691,14 +1701,14 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             activeTrackIndex = index - 1
             selectedNotes.clear()
             project.removeTrack(tracks[index])
-            redrawAll()
         } else {
             project.removeTrack(tracks[index])
             activeTrack = tracks[index]
             activeTrackIndex = index
             selectedNotes.clear()
-            redrawAll()
         }
+
+        redrawAll()
     }
 
     public fun canGoToNextTrack(): Boolean {
@@ -1714,17 +1724,18 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     public fun canDeleteActiveTrack(): Boolean {
-        return project.getTracks().size > 1
+        val return1 = project.getTracks().size > 0
+        println(project.getTracks().size)
+        return return1
     }
 
     public fun canEditActiveTrackName(): Boolean {
-        return true
+        return activeTrackIndex >= 0
     }
 
     public fun getActiveTrackName(): String {
-        println(activeTrackIndex)
         if (activeTrackIndex < 0) {
-            return ""
+            return "(No track)"
         }
         return activeTrack.getName()
     }

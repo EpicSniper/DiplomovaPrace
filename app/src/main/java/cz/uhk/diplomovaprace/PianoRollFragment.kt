@@ -105,6 +105,7 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
         stopButton.setOnClickListener {
             pianoRollView.pushStopButton()
             updateRecordButtonStates()
+            setActiveTrackName()
         }
 
         projectSettingsFragment.setListener(this)
@@ -168,30 +169,34 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
         }
 
         deleteTrackButton.setOnClickListener {
-            pianoRollView.deleteActiveTrack()
-            setActiveTrackName()
+            if (pianoRollView.canDeleteActiveTrack()) {
+                pianoRollView.deleteActiveTrack()
+                setActiveTrackName()
+            }
         }
 
         editTrackNameButton.setOnClickListener {
-            val dialogView =
-                LayoutInflater.from(context).inflate(R.layout.edit_property_dialog, null)
-            val inputEditText = dialogView.findViewById<TextInputEditText>(R.id.propertyValueInput)
-            inputEditText.setText(pianoRollView.getActiveTrackName())
+            if (pianoRollView.canEditActiveTrackName()) {
+                val dialogView =
+                    LayoutInflater.from(context).inflate(R.layout.edit_property_dialog, null)
+                val inputEditText = dialogView.findViewById<TextInputEditText>(R.id.propertyValueInput)
+                inputEditText.setText(pianoRollView.getActiveTrackName())
 
-            context?.let { it1 ->
-                MaterialAlertDialogBuilder(it1)
-                    .setTitle("Edit track name")
-                    .setView(dialogView)
-                    .setPositiveButton("Edit") { _, _ ->
-                        val newTrackName = inputEditText.text.toString()
-                        pianoRollView.setActiveTrackName(newTrackName)
-                        setActiveTrackName()
-                    }
-                    .setNegativeButton("Cancel", null)
-                    .show()
+                context?.let { it1 ->
+                    MaterialAlertDialogBuilder(it1)
+                        .setTitle("Edit track name")
+                        .setView(dialogView)
+                        .setPositiveButton("Edit") { _, _ ->
+                            val newTrackName = inputEditText.text.toString()
+                            pianoRollView.setActiveTrackName(newTrackName)
+                            setActiveTrackName()
+                        }
+                        .setNegativeButton("Cancel", null)
+                        .show()
+                }
+
+                setActiveTrackName()
             }
-
-            setActiveTrackName()
         }
 
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner) {
