@@ -182,9 +182,10 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
                 MaterialAlertDialogBuilder(it1)
                     .setTitle("Edit track name")
                     .setView(dialogView)
-                    .setPositiveButton("Edit") { dialog, _ ->
+                    .setPositiveButton("Edit") { _, _ ->
                         val newTrackName = inputEditText.text.toString()
                         pianoRollView.setActiveTrackName(newTrackName)
+                        setActiveTrackName()
                     }
                     .setNegativeButton("Cancel", null)
                     .show()

@@ -515,11 +515,24 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             }
         }
 
-        val pitch = lastNote.toByte()
-        val start = startOfTheLastNote
-        val duration = recordingLineTime.last().toInt() - startOfTheLastNote
-        val rectF = getRectFromNoteInfo(pitch, start, duration)
-        newNotes.add(Note(pitch, start, duration, rectF.left, rectF.top, rectF.right, rectF.bottom))
+
+        if (recordingLineTime.size > 0) {
+            val pitch = lastNote.toByte()
+            val start = startOfTheLastNote
+            val duration = recordingLineTime.last().toInt() - startOfTheLastNote
+            val rectF = getRectFromNoteInfo(pitch, start, duration)
+            newNotes.add(
+                Note(
+                    pitch,
+                    start,
+                    duration,
+                    rectF.left,
+                    rectF.top,
+                    rectF.right,
+                    rectF.bottom
+                )
+            )
+        }
 
         val newTrack = Track()
         newTrack.addNotes(newNotes)
@@ -1331,8 +1344,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         if (isCreating && !creatingNote) {
             if (event1 != null) {
                 creatingNoteStart = snapNote((convertEventX(event1.x) - pianoKeyWidth).toInt()).toFloat()
-                println(convertEventX(event1.x).toString() + " | " + event1.x)
-
             }
             if (event1 != null) {
                 creatingNotePitch = heightToPitchConverter(convertEventY(event1.y))
@@ -1372,8 +1383,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     }
 
     override fun onLongPress(event: MotionEvent) {
-        println("------- ON LONG PRESS -------")
-        println("X: " + event.x + " |Y: " + event.y)
+        /*println("------- ON LONG PRESS -------")
+        println("X: " + event.x + " |Y: " + event.y)*/
 
         onLongPressEvent(event.x, event.y)
     }
@@ -1650,6 +1661,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         val index = tracks.indexOf(activeTrack)
         if (index < tracks.size - 1) {
             activeTrack = tracks[index + 1]
+            activeTrackIndex = index
             selectedNotes.clear()
             redrawAll()
         }
@@ -1660,6 +1672,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         val index = tracks.indexOf(activeTrack)
         if (index > 0) {
             activeTrack = tracks[index - 1]
+            activeTrackIndex = index
             selectedNotes.clear()
             redrawAll()
         }
@@ -1668,18 +1681,23 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     public fun deleteActiveTrack() {
         val tracks = project.getTracks()
         val index = tracks.indexOf(activeTrack)
-        if (index > 0) {
-            project.removeTrack(activeTrack)
+        if (tracks.size == 1) {
+            clearAll()
+            return
+        }
+
+        if (tracks.size == index + 1) {
             activeTrack = tracks[index - 1]
+            activeTrackIndex = index - 1
             selectedNotes.clear()
-            redrawAll()
-        } else if (index == 0 && tracks.size > 1) {
-            project.removeTrack(activeTrack)
-            activeTrack = tracks[1]
-            selectedNotes.clear()
+            project.removeTrack(tracks[index])
             redrawAll()
         } else {
-            clearAll()
+            project.removeTrack(tracks[index])
+            activeTrack = tracks[index]
+            activeTrackIndex = index
+            selectedNotes.clear()
+            redrawAll()
         }
     }
 
