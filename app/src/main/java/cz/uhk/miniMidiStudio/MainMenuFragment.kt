@@ -8,6 +8,7 @@ import android.widget.ImageView
 import androidx.activity.addCallback
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import cz.uhk.miniMidiStudio.R
 import cz.uhk.miniMidiStudio.Settings.SettingsBottomSheetDialogFragment
 
 class MainMenuFragment : Fragment() {

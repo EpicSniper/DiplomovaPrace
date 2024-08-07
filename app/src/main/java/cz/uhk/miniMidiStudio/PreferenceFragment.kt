@@ -3,6 +3,7 @@ package cz.uhk.miniMidiStudio
 import android.os.Bundle
 import androidx.preference.ListPreference
 import androidx.preference.PreferenceFragmentCompat
+import cz.uhk.miniMidiStudio.R
 import cz.uhk.miniMidiStudio.PianoRoll.PitchDetectionMethod
 
 class PreferenceFragment : PreferenceFragmentCompat() {

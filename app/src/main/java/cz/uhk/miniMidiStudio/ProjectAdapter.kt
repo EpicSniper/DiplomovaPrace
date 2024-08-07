@@ -6,9 +6,9 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.navigation.NavController
 import androidx.recyclerview.widget.RecyclerView
+import cz.uhk.miniMidiStudio.R
 import cz.uhk.miniMidiStudio.Project.Project
 import cz.uhk.miniMidiStudio.Project.ProjectViewModel
-import cz.uhk.miniMidiStudio.R
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 

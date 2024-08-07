@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import cz.uhk.miniMidiStudio.R
 
 class MainActivity : AppCompatActivity() {
 

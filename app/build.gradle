@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace 'cz.uhk.diplomovaprace'
+    namespace 'cz.uhk.miniMidiStudio'
     compileSdk 34
 
     defaultConfig {
-        applicationId "cz.uhk.diplomovaprace"
+        applicationId "cz.uhk.miniMidiStudio"
         minSdk 28
         targetSdk 34
         versionCode 1
