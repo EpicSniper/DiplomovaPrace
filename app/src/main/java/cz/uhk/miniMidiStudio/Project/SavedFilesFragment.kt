@@ -1,6 +1,5 @@
-package cz.uhk.miniMidiStudio
+package cz.uhk.miniMidiStudio.Project
 
-import ProjectAdapter
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -15,8 +14,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import cz.uhk.miniMidiStudio.R
-import cz.uhk.miniMidiStudio.Project.ProjectManager
-import cz.uhk.miniMidiStudio.Project.ProjectViewModel
 
 class SavedFilesFragment : Fragment() {
 

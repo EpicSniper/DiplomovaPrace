@@ -1,4 +1,4 @@
-package cz.uhk.miniMidiStudio
+package cz.uhk.miniMidiStudio.PianoRoll
 
 import ProjectSettingsFragment
 import android.os.Bundle
@@ -15,7 +15,6 @@ import androidx.navigation.fragment.findNavController
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import cz.uhk.miniMidiStudio.R
-import cz.uhk.miniMidiStudio.PianoRoll.PianoRollView
 import cz.uhk.miniMidiStudio.Project.ProjectViewModel
 import cz.uhk.miniMidiStudio.Settings.ProjectSettingsData
 

@@ -1,4 +1,4 @@
-package cz.uhk.miniMidiStudio
+package cz.uhk.miniMidiStudio.Settings
 
 import android.os.Bundle
 import androidx.preference.ListPreference

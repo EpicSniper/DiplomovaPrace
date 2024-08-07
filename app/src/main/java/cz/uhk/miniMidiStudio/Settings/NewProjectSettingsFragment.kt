@@ -9,7 +9,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
 import cz.uhk.miniMidiStudio.PianoRoll.PitchDetectionMethod
-import cz.uhk.miniMidiStudio.PreferenceFragment
 import cz.uhk.miniMidiStudio.Project.Project
 import cz.uhk.miniMidiStudio.Project.ProjectViewModel
 import cz.uhk.miniMidiStudio.R

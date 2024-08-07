@@ -18,7 +18,6 @@ import androidx.core.content.ContextCompat
 import cz.uhk.miniMidiStudio.PianoRoll.Midi.MidiCreator
 import cz.uhk.miniMidiStudio.PianoRoll.Midi.MidiFactory
 import cz.uhk.miniMidiStudio.PianoRoll.Midi.MidiPlayer
-import cz.uhk.miniMidiStudio.PianoRollFragment
 import cz.uhk.miniMidiStudio.Project.Project
 import cz.uhk.miniMidiStudio.Project.Track
 import cz.uhk.miniMidiStudio.R

@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/pianorollframe"
-    tools:context=".PianoRollFragment">
+    tools:context=".PianoRoll.PianoRollFragment">
 
     <cz.uhk.miniMidiStudio.PianoRoll.PianoRollView
         android:id="@+id/piano_roll_view"

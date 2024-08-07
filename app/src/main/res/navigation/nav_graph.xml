@@ -20,7 +20,7 @@
 
     <fragment
         android:id="@+id/savedFilesFragment"
-        android:name="cz.uhk.miniMidiStudio.SavedFilesFragment"
+        android:name="cz.uhk.miniMidiStudio.Project.SavedFilesFragment"
         android:label="SavedFilesFragment" >
         <action
             android:id="@+id/action_savedFilesFragment_to_mainMenuFragment"
@@ -34,7 +34,7 @@
     </fragment>
     <fragment
         android:id="@+id/pianoRollFragment"
-        android:name="cz.uhk.miniMidiStudio.PianoRollFragment"
+        android:name="cz.uhk.miniMidiStudio.PianoRoll.PianoRollFragment"
         android:label="fragment_piano_roll"
         tools:layout="@layout/fragment_piano_roll" />
     <fragment
