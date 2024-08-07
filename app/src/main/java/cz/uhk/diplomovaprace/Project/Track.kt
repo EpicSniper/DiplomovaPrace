@@ -6,11 +6,21 @@ import kotlinx.serialization.Serializable
 @Serializable
 class Track(
     private var notes: ArrayList<Note> = ArrayList(),
-    private var start: Int = 0,
     private var name: String = "New track",
-    private var audioFile: String? = null
+    private var audioFile: String? = null,
+    private var getRecordingsStart: Int? = null
 ) {
+    fun getRecordingsStart(): Int? {
+        return getRecordingsStart
+    }
 
+    fun setRecordingsStart(newRecordingsStart: Int) {
+        getRecordingsStart = newRecordingsStart
+    }
+
+    fun getEnd(): Int {
+        return notes.maxOfOrNull { it.start + it.duration } ?: Int.MIN_VALUE
+    }
 
     fun getAudioFile(): String? {
         return audioFile
@@ -29,11 +39,7 @@ class Track(
     }
 
     fun getStart(): Int {
-        return start
-    }
-
-    fun setStart(newStart: Int) {
-        start = newStart
+        return notes.minOfOrNull { it.start + it.duration } ?: Int.MIN_VALUE
     }
 
     fun getNotes(): ArrayList<Note> {

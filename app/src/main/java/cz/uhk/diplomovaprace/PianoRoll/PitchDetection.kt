@@ -4,9 +4,11 @@ import org.jtransforms.fft.DoubleFFT_1D
 import kotlin.math.sqrt
 
 class PitchDetection {
+    // TODO: Implement the following methods
     // private fun getPitchPWPD(audioData: ShortArray, sampleRate: Int): Double
 
     // private fun getPitchMLE(audioData: ShortArray, sampleRate: Int): Double
+
     public fun getAutocorrelationPitch(audioData: ShortArray, sampleRate: Int): Double {
 
         // autocorelation method
@@ -19,6 +21,7 @@ class PitchDetection {
                 audioData[i] / 32768.0 // 32768.0 is the maximum value of a signed 16-bit integer
         }
 
+        // TODO: tweak these values
         val minPeriod =
             (sampleRate / 2000) // Minimum period for pitch detection (e.g., 1000 Hz)
         val maxPeriod = (sampleRate / 80) // Maximum period for pitch detection (e.g., 200 Hz)

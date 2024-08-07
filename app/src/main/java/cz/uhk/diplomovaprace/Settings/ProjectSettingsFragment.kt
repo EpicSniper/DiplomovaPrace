@@ -9,8 +9,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import cz.uhk.diplomovaprace.R
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
-import cz.uhk.diplomovaprace.PitchDetectionMethod
-import cz.uhk.diplomovaprace.Project.Project
+import cz.uhk.diplomovaprace.PianoRoll.PitchDetectionMethod
 import cz.uhk.diplomovaprace.Settings.ProjectSettingsData
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString

@@ -22,6 +22,7 @@ import com.google.android.material.textfield.TextInputLayout
 import cz.uhk.diplomovaprace.PianoRoll.PianoRollView
 import cz.uhk.diplomovaprace.Project.ProjectViewModel
 import cz.uhk.diplomovaprace.Settings.ProjectSettingsData
+import org.w3c.dom.Text
 
 
 /**
@@ -45,6 +46,7 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
     private lateinit var deleteTrackButton: ImageView
     private lateinit var editTrackNameButton: ImageView
     private lateinit var activeTrackName: TextView
+    private lateinit var changePlayingSoundButton: ImageView
     private var activeTrackIndex = -1
 
     private val viewModel: ProjectViewModel by activityViewModels()
@@ -78,6 +80,7 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
         deleteTrackButton = view.findViewById(R.id.deleteTrackButton)
         editTrackNameButton = view.findViewById(R.id.editTrackNameButton)
         activeTrackName = view.findViewById(R.id.activeTrackName)
+        changePlayingSoundButton = view.findViewById(R.id.changePlayingSoundButton)
 
         playButton.alpha = 1f
         recordButton.alpha = 1f
@@ -89,6 +92,7 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
         previousTrackButton.alpha = 0.3f
         deleteTrackButton.alpha = 0.3f
         editTrackNameButton.alpha = 0.3f
+        changePlayingSoundButton.alpha = 1f
 
         setActiveTrackName()
 
@@ -175,11 +179,17 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
             }
         }
 
+        changePlayingSoundButton.setOnClickListener {
+            pianoRollView.setPlayRecordings(!pianoRollView.isPlayingRecordings())
+            updateRecordingButtons()
+        }
+
         editTrackNameButton.setOnClickListener {
             if (pianoRollView.canEditActiveTrackName()) {
                 val dialogView =
                     LayoutInflater.from(context).inflate(R.layout.edit_property_dialog, null)
-                val inputEditText = dialogView.findViewById<TextInputEditText>(R.id.propertyValueInput)
+                val inputEditText =
+                    dialogView.findViewById<TextInputEditText>(R.id.propertyValueInput)
                 inputEditText.setText(pianoRollView.getActiveTrackName())
 
                 context?.let { it1 ->
@@ -241,6 +251,15 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
         updateRecordButtonStates()
         updateEditButtonStates()
         updateTrackButtons()
+        updateRecordingButtons()
+    }
+
+    private fun updateRecordingButtons() {
+        if (pianoRollView.isPlayingRecordings()) {
+            changePlayingSoundButton.setImageResource(R.drawable.select_all)
+        } else {
+            changePlayingSoundButton.setImageResource(R.drawable.noselection)
+        }
     }
 
     private fun updateTrackButtons() {

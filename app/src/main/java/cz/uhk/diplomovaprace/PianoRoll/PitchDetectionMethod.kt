@@ -1,4 +1,4 @@
-package cz.uhk.diplomovaprace
+package cz.uhk.diplomovaprace.PianoRoll
 
 enum class PitchDetectionMethod(val method: String) {
     AUTOCORRELATION("Auto-correlation"),

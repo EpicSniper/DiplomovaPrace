@@ -3,14 +3,12 @@ package cz.uhk.diplomovaprace.Settings
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
-import android.widget.EditText
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.preference.EditTextPreference
 import androidx.preference.ListPreference
-import androidx.preference.Preference
-import cz.uhk.diplomovaprace.PitchDetectionMethod
+import cz.uhk.diplomovaprace.PianoRoll.PitchDetectionMethod
 import cz.uhk.diplomovaprace.PreferenceFragment
 import cz.uhk.diplomovaprace.Project.Project
 import cz.uhk.diplomovaprace.Project.ProjectViewModel

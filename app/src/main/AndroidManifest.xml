@@ -6,7 +6,9 @@
         android:name="android.permission.MANAGE_DOCUMENTS"
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.Media.createWriteRequest" />
+    <uses-permission android:name="android.permission.MediaStore.createWriteRequest" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <uses-feature
         android:name="android.software.midi"
@@ -38,8 +40,7 @@
             android:name=".PianoRollActivity"
             android:exported="true"
             android:label="@string/title_activity_main"
-            android:theme="@style/Theme.DiplomovaPrace.NoActionBar">
-        </activity>
+            android:theme="@style/Theme.DiplomovaPrace.NoActionBar"></activity>
         <activity
             android:name=".MainMenuFragment"
             android:exported="true"

@@ -7,7 +7,7 @@ import java.util.ArrayList;
 
 public class MidiPlayer {
 
-    private MidiDriver midi;
+    private final MidiDriver midi;
     private ArrayList<Byte> playingNotes = new ArrayList<Byte>();
     private boolean isListening;
 
@@ -68,7 +68,7 @@ public class MidiPlayer {
     }
 
     public void sendMidi(int m, int n, int v) {
-        byte msg[] = new byte[3];
+        byte[] msg = new byte[3];
 
         msg[0] = (byte) m;
         msg[1] = (byte) n;
