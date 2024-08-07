@@ -8,7 +8,7 @@
     android:background="@color/pianorollframe"
     tools:context=".PianoRollFragment">
 
-    <cz.uhk.diplomovaprace.PianoRoll.PianoRollView
+    <cz.uhk.miniMidiStudio.PianoRoll.PianoRollView
         android:id="@+id/piano_roll_view"
         android:layout_width="0dp"
         android:layout_height="0dp"

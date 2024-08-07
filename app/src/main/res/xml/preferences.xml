@@ -8,21 +8,21 @@
         android:title="Algorithm type"
         app:useSimpleSummaryProvider="true" />
 
-    <cz.uhk.diplomovaprace.Settings.NumericEditTextPreference
+    <cz.uhk.miniMidiStudio.Settings.NumericEditTextPreference
         android:key="nota_a_frekvence"
         android:title="Pitch of a1"
         android:summary="Set the frequency of a1"
         android:defaultValue="440"
         app:useSimpleSummaryProvider="true" />
 
-    <cz.uhk.diplomovaprace.Settings.NumericEditTextPreference
+    <cz.uhk.miniMidiStudio.Settings.NumericEditTextPreference
         android:key="bpm"
         android:title="Beats per minute"
         android:summary="Set the tempo"
         android:defaultValue="120"
         app:useSimpleSummaryProvider="true" />
 
-    <cz.uhk.diplomovaprace.Settings.TimeSignaturePreference
+    <cz.uhk.miniMidiStudio.Settings.TimeSignaturePreference
         android:key="time_signature_key"
         android:title="Time Signature"
         android:layout="@layout/pref_time_signature" />

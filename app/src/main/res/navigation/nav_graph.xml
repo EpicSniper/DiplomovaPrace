@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/mainMenuFragment"
-        android:name="cz.uhk.diplomovaprace.MainMenuFragment"
+        android:name="cz.uhk.miniMidiStudio.MainMenuFragment"
         android:label="fragment_main_menu"
         tools:layout="@layout/fragment_main_menu" >
         <action
@@ -20,7 +20,7 @@
 
     <fragment
         android:id="@+id/savedFilesFragment"
-        android:name="cz.uhk.diplomovaprace.SavedFilesFragment"
+        android:name="cz.uhk.miniMidiStudio.SavedFilesFragment"
         android:label="SavedFilesFragment" >
         <action
             android:id="@+id/action_savedFilesFragment_to_mainMenuFragment"
@@ -34,12 +34,12 @@
     </fragment>
     <fragment
         android:id="@+id/pianoRollFragment"
-        android:name="cz.uhk.diplomovaprace.PianoRollFragment"
+        android:name="cz.uhk.miniMidiStudio.PianoRollFragment"
         android:label="fragment_piano_roll"
         tools:layout="@layout/fragment_piano_roll" />
     <fragment
         android:id="@+id/newProjectSettingsFragment"
-        android:name="cz.uhk.diplomovaprace.Settings.NewProjectSettingsFragment"
+        android:name="cz.uhk.miniMidiStudio.Settings.NewProjectSettingsFragment"
         android:label="NewProjectSettingsFragment" >
         <action
             android:id="@+id/action_newProjectSettingsFragment_to_pianoRollFragment"
