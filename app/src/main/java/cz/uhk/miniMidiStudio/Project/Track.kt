@@ -11,6 +11,10 @@ class Track(
     private var getRecordingsStart: Int? = null
 ) {
     fun getRecordingsStart(): Int? {
+        if (getRecordingsStart == null) {
+            getRecordingsStart = Int.MAX_VALUE
+        }
+
         return getRecordingsStart
     }
 

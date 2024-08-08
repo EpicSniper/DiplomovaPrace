@@ -28,6 +28,7 @@ import kotlin.math.*
 import kotlin.math.pow
 import cz.uhk.miniMidiStudio.Project.ProjectManager
 import cz.uhk.miniMidiStudio.Settings.ProjectSettingsData
+import kotlinx.coroutines.DelicateCoroutinesApi
 import java.io.File
 import java.util.UUID
 
@@ -40,9 +41,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private var paint = Paint()
     private var selectedNotes = ArrayList<Note>()
     private var playingNotes = ArrayList<Note>()
-    private var pianoKeys = ArrayList<RectF>()  // TODO: vyuzit tento ArrayList
+    private var pianoKeys = ArrayList<RectF>()
 
-    // TODO: vsechno dat do ArrayList()<RectF> -> pohlidam si tim klikani, vim, kde co je
     private var movingNoteIndex = -1
     private var movingNote = false
     private var movingNoteStart = 0
@@ -237,11 +237,10 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
         rectFArrayListInicialization()
 
-        // debugAddNotes()
-
         midiPlayer = MidiPlayer()
 
-        /*if (ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        /*
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)
             != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(context,
                 arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
@@ -249,7 +248,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         } else {
             // Permission already granted
             // Write your file-saving code here
-        }*/
+        }
+        */
 
         val midiFactory = MidiFactory()
         midiFactory.main(context)
@@ -299,8 +299,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         drawTimelineAndPiano(canvas)
         drawRecordingLine(canvas)
 
-        //drawDebugLines(canvas)
-
         // playing
         if (isPlaying) {
             currentTime = System.currentTimeMillis()
@@ -308,7 +306,19 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             lineOnTime += ((tempo / 60f) * beatLength) * elapsedTime / 1000f
             lastFrameTime = currentTime
             if (playRecordings) {
-
+                // zjistit, v jake casti se nachazim
+                // zapnout zvuk, kdyz je cas startu mensi nez cas kde jsem
+                project.getTracks().forEachIndexed {index, it ->
+                    val recordingStart = it.getRecordingsStart()!!
+                    if (!recordMediaPlayers[index].hasPlayingStarted() && recordingStart <= lineOnTime) {
+                        // vypocitej, kolik je zpozdeni
+                        val delay = lineOnTime - recordingStart
+                        // jedna doba je 480
+                        // zjisti, kolik je to v milisekundach
+                        val delayInMs = ((delay * 1000 / beatLength).toInt() / tempo) * 60
+                        recordMediaPlayers[index].startPlaying(context, delayInMs)
+                    }
+                }
             } else {
                 playNotes()
             }
@@ -360,16 +370,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
                 pitchDetection.getHPSPitch(audioData, sampleRate)
             }
         }
-    }
-
-    // hlasitost
-    private fun calculateRMS(audioData: DoubleArray): Double {
-        var sum = 0.0
-        for (value in audioData) {
-            sum += value * value
-        }
-        val meanSquare = sum / audioData.size
-        return sqrt(meanSquare)
     }
 
     // a4Height - default 442Hz
@@ -448,6 +448,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private fun convertRecordingToNotes() {
         var recordedNotes = ArrayList<Int>()
         val newNotes = ArrayList<Note>()
+        val recordingStart = recordingLineTime[0].toInt()
         recordingLineAutocorrelation.forEach {
             recordedNotes.add(closestNote(it.toFloat()))
         }
@@ -552,6 +553,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         val newTrack = Track()
         newTrack.addNotes(newNotes)
         newTrack.setAudioFile(recordedTrackUuid)
+        newTrack.setRecordingsStart(recordingStart)
 
         // add new track to project and set it as active track
         project.addTrack(newTrack)
@@ -1199,10 +1201,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         project.getTracks().forEach {
             recordMediaPlayers.add(RecordMediaPlayer(it))
         }
-
-        recordMediaPlayers.forEach {
-            it.startPlaying(context, 0)
-        }
     }
 
     fun pushRecordButton() {
@@ -1279,6 +1277,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         }
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     private fun onDownEvent(eventX: Float, eventY: Float) {
         if (isEditing) {
             movingNote = false
@@ -1290,7 +1289,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         movingTimeLine = false
         if (convertEventY(eventY) > top && convertEventY(eventY) <= bottom) {
             // taplo se na timeline -> presunout line
-            isPlaying = false
+            pushStopButton()
             movingTimeLine = true
             if (convertEventX(eventX) - pianoKeyWidth > 0) {
                 lineOnTime = convertEventX(eventX) - pianoKeyWidth
@@ -1499,72 +1498,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         scalingX = false
         scalingY = false
         //println("OnScaleEnd")
-    }
-
-    private fun drawDebugLines(canvas: Canvas) {
-        for (i in 0 until 20) {
-            if (i % 2 == 0) {
-                paint.color = Color.RED
-            } else {
-                paint.color = Color.GREEN
-            }
-
-            canvas.drawRect(i * 100f, 0f, (i * 100f) + 100f, 20f, paint)
-        }
-
-        for (i in 0 until 20) {
-            if (i % 2 == 0) {
-                paint.color = Color.RED
-            } else {
-                paint.color = Color.GREEN
-            }
-
-            canvas.drawRect(0f, i * 100f, 20f, (i * 100f) + 100f, paint)
-        }
-
-        canvas.drawRect(400f, 400f, 800f, 800f, paint)
-
-        paint.color = Color.BLUE
-        canvas.drawRect(centerX - 50f, centerY - 50f, centerX + 50f, centerY + 50f, paint)
-
-        // Random vertex
-        paint.color = Color.RED
-        val vertices = floatArrayOf(
-            100f, 100f,  // first vertex
-            200f, 100f,  // second vertex
-            150f, 200f   // third vertex
-        )
-
-        val colors = intArrayOf(
-            Color.BLUE, Color.BLUE, Color.BLUE, -0x1000000, -0x1000000, -0x1000000
-        )
-
-        val vertexCount = vertices.size
-
-        canvas.drawVertices(
-            VertexMode.TRIANGLES, vertexCount, vertices,
-            0, null, 0,
-            colors.map { it.toInt() }.toIntArray(),
-            0, null, 0, 0, paint
-        )
-    }
-
-    private fun debugAddNotes() {
-        var rectF = getRectFromNoteInfo(60, 0, 480)
-        var note = Note(60, 0, 480, rectF.left, rectF.top, rectF.right, rectF.bottom)
-        activeTrack.getNotes().add(note)
-
-        rectF = getRectFromNoteInfo(64, 240, 480)
-        note = Note(64, 240, 960, rectF.left, rectF.top, rectF.right, rectF.bottom)
-        activeTrack.getNotes().add(note)
-
-        rectF = getRectFromNoteInfo(64, 1440, 960)
-        note = Note(60, 1440, 480, rectF.left, rectF.top, rectF.right, rectF.bottom)
-        activeTrack.getNotes().add(note)
-
-        rectF = getRectFromNoteInfo(64, 1440, 960)
-        note = Note(64, 1440, 960, rectF.left, rectF.top, rectF.right, rectF.bottom)
-        activeTrack.getNotes().add(note)
     }
 
     public fun saveProject() {

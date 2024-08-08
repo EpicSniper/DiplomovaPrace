@@ -9,6 +9,7 @@ import java.io.IOException
 class RecordMediaPlayer (private val track: Track) {
     private val mediaPlayer = MediaPlayer()
     private var isPlaying: Boolean = false
+    private var playingStarted: Boolean = false
 
     public fun stopPlaying() {
         if (isPlaying) {
@@ -18,23 +19,30 @@ class RecordMediaPlayer (private val track: Track) {
         }
     }
 
-    public fun startPlaying(context: Context, startTimeInSeconds: Int) {
+    public fun startPlaying(context: Context, startTimeInMiliSeconds: Int) {
         try {
             val file = File(context.filesDir, "${track.getAudioFile()}.mp3")
             val absolutePath = file.absolutePath
             mediaPlayer.setDataSource(absolutePath)
             mediaPlayer.prepare()
-            mediaPlayer.seekTo(startTimeInSeconds * 1000)
+            mediaPlayer.seekTo(startTimeInMiliSeconds)
             mediaPlayer.start()
             isPlaying = true
+            playingStarted = true
             mediaPlayer.setOnCompletionListener {
                 mediaPlayer.release()
                 isPlaying = false
             }
         } catch (_: IOException) {
             isPlaying = false
+            playingStarted = false
         } catch (_: IllegalStateException) {
             isPlaying = false
+            playingStarted = false
         }
+    }
+
+    public fun hasPlayingStarted(): Boolean {
+        return playingStarted
     }
 }
