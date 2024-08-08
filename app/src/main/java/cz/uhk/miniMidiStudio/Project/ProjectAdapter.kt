@@ -18,6 +18,7 @@ class ProjectAdapter(private val projects: List<Project>, private val viewModel:
     inner class ProjektViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nazevTextView: TextView = itemView.findViewById(R.id.nazevProjektuTextView)
         val popisTextView: TextView = itemView.findViewById(R.id.popisProjektuTextView)
+        val delkaProjektuTextView: TextView = itemView.findViewById(R.id.delkaProjektuTextView)
         val menuButton: ImageView = itemView.findViewById(R.id.menuImage)
 
         init {
@@ -52,6 +53,14 @@ class ProjectAdapter(private val projects: List<Project>, private val viewModel:
         //TODO: nastavit delku projektu
         holder.nazevTextView.text = project.getName()
         holder.popisTextView.text = getFormattedDateTime(project.getCreatedAt())
+        holder.delkaProjektuTextView.text = "0:00"
+        var end = project.getTracks().maxOfOrNull { it.getEnd() } ?: 0
+        println(end)
+        end = (((end / 480f) / project.getTempo().toFloat()) * 60).toInt()
+        println(end)
+        val minutes = (end / 60).toString().padStart(2, '0')
+        val seconds = (end % 60).toString().padStart(2, '0')
+        holder.delkaProjektuTextView.text = "$minutes:$seconds"
     }
 
     override fun getItemCount(): Int = projects.size

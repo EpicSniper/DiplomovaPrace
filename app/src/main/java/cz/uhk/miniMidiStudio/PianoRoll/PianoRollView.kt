@@ -297,7 +297,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         rescaleRectsOfNotes(activeTrack.getNotes())
         drawNotes(canvas)
         drawTimelineAndPiano(canvas)
-        drawRecordingLine(canvas)
 
         // playing
         if (isPlaying) {
@@ -311,10 +310,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
                 project.getTracks().forEachIndexed {index, it ->
                     val recordingStart = it.getRecordingsStart()!!
                     if (!recordMediaPlayers[index].hasPlayingStarted() && recordingStart <= lineOnTime) {
-                        // vypocitej, kolik je zpozdeni
                         val delay = lineOnTime - recordingStart
-                        // jedna doba je 480
-                        // zjisti, kolik je to v milisekundach
                         val delayInMs = ((delay * 1000 / beatLength).toInt() / tempo) * 60
                         recordMediaPlayers[index].startPlaying(context, delayInMs)
                     }
@@ -425,24 +421,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             paint
         )
         paint.strokeWidth = 0f
-    }
-
-    // TODO: debug funkce
-    private fun drawRecordingLine(canvas: Canvas) {
-        if (recordingLineTime.size >= recordingLineAutocorrelation.size) {
-            for (i in 0 until recordingLineAutocorrelation.size) {
-                if (i != 0) {
-                    paint.color = Color.GREEN
-                    canvas.drawLine(
-                        recordingLineTime[i - 1],
-                        recordingLineAutocorrelation[i - 1].toFloat(),
-                        recordingLineTime[i],
-                        recordingLineAutocorrelation[i].toFloat(),
-                        paint
-                    )
-                }
-            }
-        }
     }
 
     private fun convertRecordingToNotes() {
@@ -1221,6 +1199,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             mediaRecorder.setOutputFile(file.absolutePath)
             mediaRecorder.prepare()
             mediaRecorder.start()
+
             recordThread = RecordThread(mediaRecorder)
             recordThread?.start()
             isPlaying = true
@@ -1228,7 +1207,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             drawThread?.start()
             resetTime()
             if (playRecordings) {
-                //initRecordMediaPlayers()
+                initRecordMediaPlayers()
             } else {
                 midiPlayer.onMidiStart()
             }
