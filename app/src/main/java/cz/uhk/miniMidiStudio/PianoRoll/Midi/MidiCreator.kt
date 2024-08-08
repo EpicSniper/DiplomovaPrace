@@ -1,28 +1,27 @@
 package cz.uhk.miniMidiStudio.PianoRoll.Midi
 
 import android.content.Context
+import android.content.Intent
+import android.os.storage.StorageManager
+import androidx.core.content.ContextCompat.startActivity
+import androidx.core.content.FileProvider
 import cz.uhk.miniMidiStudio.PianoRoll.Note
+import cz.uhk.miniMidiStudio.Project.Project
 import cz.uhk.miniMidiStudio.Project.Track
 import java.io.File
 import java.io.FileOutputStream
 import kotlin.math.pow
 
-class MidiCreator {
+class MidiCreator() {
+    private var project = Project()
 
-    private var tracks = ArrayList<Track>()
-
-    constructor() {
-        tracks = ArrayList<Track>()
-    }
-
-    // Vytvořit data pro midi
-    public fun addTrack(track: Track) {
-        tracks.add(track)
+    public fun setProject(project: Project) {
+        this.project = project
     }
 
     private fun createTracks(): ArrayList<Byte>  {
-        var tracksArray = ArrayList<Byte>()
-        tracks.forEach {
+        val tracksArray = ArrayList<Byte>()
+        project.getTracks().forEach {
             tracksArray.addAll(createTrack(it))
         }
 
@@ -30,17 +29,17 @@ class MidiCreator {
     }
 
     private fun createTrack(track: Track): ArrayList<Byte> {
-        var noteEvents = ArrayList<NoteEvent>()
+        val noteEvents = ArrayList<NoteEvent>()
         track.getNotes().forEach {
             noteEvents.add(NoteEvent(it.pitch, it.start, true))
             noteEvents.add(NoteEvent(it.pitch, it.start + it.duration, false))
         }
 
         noteEvents.sortBy { it.time }
-        var correctedNoteEvents = ArrayList<NoteEvent>()
+        val correctedNoteEvents = ArrayList<NoteEvent>()
         noteEvents.forEachIndexed{i, it ->
             if (i != 0) {
-                var noteEvent = NoteEvent(it.pitch, it.time, it.noteOn)
+                val noteEvent = NoteEvent(it.pitch, it.time, it.noteOn)
                 noteEvent.time -= noteEvents[i-1].time
                 correctedNoteEvents.add(noteEvent)
             } else {
@@ -49,7 +48,7 @@ class MidiCreator {
         }
 
 
-        var pomTrackArray = ArrayList<Byte>()
+        val pomTrackArray = ArrayList<Byte>()
         pomTrackArray.addAll(createTrackNameEvent("Inst"))
         correctedNoteEvents.forEach {
             pomTrackArray.addAll(noteTimeEventToByte(it.time))
@@ -66,7 +65,7 @@ class MidiCreator {
 
         pomTrackArray.addAll(createEndOfTrackEvent())
 
-        var trackArray = ArrayList<Byte>()
+        val trackArray = ArrayList<Byte>()
         "MTrk".toByteArray().forEach {
             trackArray.add(it)
         }
@@ -77,7 +76,6 @@ class MidiCreator {
         return trackArray
     }
 
-    // TODO: napsat
     // Psát po 127 bytech
     // pokud je víc jak 127 bytu tak zapsat 0x80 + přebytek
     private fun noteTimeEventToByte(time: Int): ArrayList<Byte> {
@@ -93,7 +91,7 @@ class MidiCreator {
             timeArrayPom.add(remainTime.toByte())
         }
 
-        var timeArray = ArrayList<Byte>()
+        val timeArray = ArrayList<Byte>()
         timeArrayPom.forEachIndexed{i, it ->
             if (i > 0) {
                 timeArray.add((it + 128).toByte())
@@ -107,31 +105,39 @@ class MidiCreator {
         return timeArray
     }
 
+    public fun shareMidiFile(context: Context) {
+        val file = File(context.cacheDir, "4ef42fbd166a4b3f913779e5cfbeb6e7.mid")
+        val contentUri = FileProvider.getUriForFile(context, "cz.uhk.miniMidiStudio.fileprovider", file)
+        //val path = FileProvider.getUriForFile(context, "cz.uhk.miniMidiStudio.fileprovider", createMidiData(context))
 
-    public fun createMidiData(context: Context, upperTimeSignature: Int, lowerTimeSignatuer: Int, bpm: Int): ArrayList<Byte> {
-        var finalMidi = ArrayList<Byte>()
-        finalMidi.addAll(createHeader(tracks.size + 1))
-        finalMidi.addAll(createInfoTrack(upperTimeSignature, lowerTimeSignatuer, bpm))
+        val shareIntent = Intent()
+        shareIntent.action = Intent.ACTION_SEND
+        shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri)
+        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        shareIntent.type = "audio/midi"
+        startActivity(context, Intent.createChooser(shareIntent, "Share to"), null)
+    }
+
+
+    public fun createMidiData(context: Context): File {
+        val finalMidi = ArrayList<Byte>()
+        finalMidi.addAll(createHeader(project.getTracks().size + 1))
+        finalMidi.addAll(createInfoTrack(project.getTimeSignatureUpper(), project.getTimeSignatureLower(), project.getTempo()))
         finalMidi.addAll(createTracks())
 
-        val file = File(context.getExternalFilesDir(null), "example.mid")
+        val directory = context.cacheDir
+
+        val file = File(directory, "${project.getUuid()}.mid")
         val outputStream = FileOutputStream(file)
 
 
-        var byteArray = ByteArray(finalMidi.size)
+        val byteArray = ByteArray(finalMidi.size)
         finalMidi.forEachIndexed { i, it ->
             byteArray.set(i, it)
         }
         outputStream.write(byteArray)
-
-
-        //outputStream.write(getByteArray())
-
         outputStream.close()
-
-        val directory = context.filesDir
-        val midiFilePath = File(directory, "example.mid").absolutePath
-        return finalMidi
+        return File(directory, "${project.getUuid()}.mid")
     }
 
     // Funkce na vytvoření headeru
@@ -179,7 +185,7 @@ class MidiCreator {
         val infoTrackLength = timeSignatureSection.size + tempoSection.size + trackNameSection.size + endOfTrackSection.size
         val byteInfoTrackLength = byteArrayFromNumber(infoTrackLength, true, true)
 
-        var wholeArray = ArrayList<Byte>()
+        val wholeArray = ArrayList<Byte>()
         wholeArray.addAll(chunkInicializationArray)
         wholeArray.addAll(byteInfoTrackLength)
         wholeArray.addAll(timeSignatureSection)
@@ -251,18 +257,13 @@ class MidiCreator {
         return endOfTrackEvent
     }
 
-    // Funkce na vytvoření tracku z pole not
-    private fun createInstrumentTrack(notes: ArrayList<Note>) {
-
-    }
-
     // integer = 270 -> fourBytes = [14, 1]
     public fun byteArrayFromNumber(integer: Int, writeAllBytes: Boolean, reverse: Boolean): ArrayList<Byte> {
-        var byteArray = ArrayList<Byte>()
+        val byteArray = ArrayList<Byte>()
         var pomInteger = integer
         var pomValue = 0
         for (i in 0..3) {
-            var value = (integer shr (i*8)).toByte()
+            val value = (integer shr (i*8)).toByte()
             if (value < 0) {
 
             }

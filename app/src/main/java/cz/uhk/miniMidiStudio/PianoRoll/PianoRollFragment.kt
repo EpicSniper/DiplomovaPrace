@@ -14,6 +14,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
+import cz.uhk.miniMidiStudio.PianoRoll.Midi.MidiCreator
 import cz.uhk.miniMidiStudio.R
 import cz.uhk.miniMidiStudio.Project.ProjectViewModel
 import cz.uhk.miniMidiStudio.Settings.ProjectSettingsData
@@ -120,6 +121,13 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
                             ProjectSettingsFragment.newInstance(projectSettingsData)
                         projectSettingsFragment.setListener(this)
                         projectSettingsFragment.show(parentFragmentManager, "project_settings")
+                        true
+                    }
+
+                    R.id.action_export -> {
+                        val midiCreator = MidiCreator()
+                        midiCreator.setProject(pianoRollView.getProject())
+                        context?.let { midiCreator.shareMidiFile(it) }
                         true
                     }
 

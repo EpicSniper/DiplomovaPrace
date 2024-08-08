@@ -27,24 +27,23 @@ class MainActivity : AppCompatActivity() {
             // Pokud máme oprávnění pro záznam zvuku, zkontrolujeme oprávnění pro zápis do úložiště
         }
 
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), REQUEST_READ_STORAGE_PERMISSION)
+        } else {
+            // Oprávnění pro čtení z úložiště bylo uděleno
+        }
+
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), REQUEST_WRITE_STORAGE_PERMISSION)
         } else {
             // Oprávnění pro zápis do úložiště bylo uděleno
 
         }
-
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), REQUEST_READ_STORAGE_PERMISSION)
-        } else {
-            // Oprávnění pro čtení z úložiště bylo uděleno
-
-        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_WRITE_STORAGE_PERMISSION) {
+        if (requestCode == REQUEST_READ_STORAGE_PERMISSION) {
             if (resultCode == RESULT_OK) {
                 // Oprávnění pro zápis do úložiště bylo uděleno
 
@@ -73,6 +72,15 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     // Oprávnění k zápisu do úložiště bylo odepřeno
                     Toast.makeText(this, "Permission to write storage denied", Toast.LENGTH_SHORT).show()
+                }
+            }
+            REQUEST_READ_STORAGE_PERMISSION -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // Oprávnění k čtení z úložiště bylo uděleno
+
+                } else {
+                    // Oprávnění k čtení z úložiště bylo odepřeno
+                    Toast.makeText(this, "Permission to read storage denied", Toast.LENGTH_SHORT).show()
                 }
             }
         }

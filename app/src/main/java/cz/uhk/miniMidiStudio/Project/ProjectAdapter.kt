@@ -50,10 +50,8 @@ class ProjectAdapter(private val projects: List<Project>, private val viewModel:
 
     override fun onBindViewHolder(holder: ProjektViewHolder, position: Int) {
         val project = projects[position]
-        //TODO: nastavit delku projektu
         holder.nazevTextView.text = project.getName()
         holder.popisTextView.text = getFormattedDateTime(project.getCreatedAt())
-        holder.delkaProjektuTextView.text = "0:00"
         var end = project.getTracks().maxOfOrNull { it.getEnd() } ?: 0
         println(end)
         end = (((end / 480f) / project.getTempo().toFloat()) * 60).toInt()

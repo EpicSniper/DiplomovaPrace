@@ -2,6 +2,7 @@ package cz.uhk.miniMidiStudio.PianoRoll
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.Canvas
 import android.graphics.Canvas.VertexMode
 import android.graphics.Color
@@ -238,21 +239,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         rectFArrayListInicialization()
 
         midiPlayer = MidiPlayer()
-
-        /*
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-            != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(context,
-                arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-                1)
-        } else {
-            // Permission already granted
-            // Write your file-saving code here
-        }
-        */
-
-        val midiFactory = MidiFactory()
-        midiFactory.main(context)
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
@@ -319,18 +305,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
                 playNotes()
             }
         }
-
-        // TODO: ulozeni MIDI
-        val midiCreator = MidiCreator()
-        val track = Track()
-        track.setNotes(activeTrack.getNotes())
-        midiCreator.addTrack(track)
-        var midiData = midiCreator.createMidiData(
-            context,
-            this.upperTimeSignature.toInt(),
-            this.lowerTimeSignature.toInt(),
-            tempo
-        )
 
         setHertzToNotes(a4Height)
         onCreateTestFunction()
@@ -1716,5 +1690,9 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
     public fun setPlayRecordings(playRecordings: Boolean) {
         this.playRecordings = playRecordings
+    }
+
+    public fun getProject(): Project {
+        return project
     }
 }
