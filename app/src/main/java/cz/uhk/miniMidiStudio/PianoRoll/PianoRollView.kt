@@ -312,10 +312,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         unlockCanvas(canvas)
     }
 
-    public fun stopPlaying() {
-        isPlaying = false
-    }
-
     private fun onCreateTestFunction() {
 
     }
@@ -540,22 +536,22 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private fun drawTimelineAndPiano(canvas: Canvas) {
         // draw timeline
         paint.color = ContextCompat.getColor(context, R.color.pianorollframe)
-        var left = scrollX + widthDifference / 2f
+        val left = scrollX + widthDifference / 2f
         var right = scrollX + width - (widthDifference / 2f)
-        var top = scrollY + heightDifference / 2f
-        var bottom = top + timelineHeight
+        val top = scrollY + heightDifference / 2f
+        val bottom = top + timelineHeight
         canvas.drawRect(left, top, right, bottom, paint)
 
         // draw time checkpoints (bars, ticks, etc.)
         // first visible bar
-        var firstBar = left - (left % barLength) + pianoKeyWidth
+        val firstBar = left - (left % barLength) + pianoKeyWidth
         var sixteenthLengths = 0
         var actualTime = firstBar
         var topOfTheLine = top
         var upperColor = ContextCompat.getColor(context, R.color.pinkie)
         var bottomColor = ContextCompat.getColor(context, R.color.pianorollline)
-        val upperLineThickness = 16f
-        val bottomLineThickness = 8f
+        val upperLineThickness = 8f
+        val bottomLineThickness = 4f
 
         paint.textScaleX = scaleFactorY / scaleFactorX
         val barNumberCorrection = 1 - (pianoKeyWidth / barLength).toInt()
@@ -646,9 +642,9 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
             if (renderLines) {
                 paint.color = upperColor
-                paint.strokeWidth = upperLineThickness
+                paint.strokeWidth = upperLineThickness / scaleFactorX
                 canvas.drawLine(actualTime, topOfTheLine, actualTime, bottom, paint)
-                paint.strokeWidth = bottomLineThickness
+                paint.strokeWidth = bottomLineThickness / scaleFactorX
                 paint.color = bottomColor
                 canvas.drawLine(actualTime, bottom, actualTime, height.toFloat(), paint)
             }

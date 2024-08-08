@@ -27,17 +27,25 @@ class MainActivity : AppCompatActivity() {
             // Pokud máme oprávnění pro záznam zvuku, zkontrolujeme oprávnění pro zápis do úložiště
         }
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), REQUEST_READ_STORAGE_PERMISSION)
-        } else {
-            // Oprávnění pro čtení z úložiště bylo uděleno
-        }
-
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), REQUEST_WRITE_STORAGE_PERMISSION)
         } else {
             // Oprávnění pro zápis do úložiště bylo uděleno
+        }
 
+        // if sdk version is 33 or higher
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_MEDIA_AUDIO), REQUEST_READ_STORAGE_PERMISSION)
+            } else {
+                // Oprávnění pro zápis do úložiště bylo uděleno
+            }
+        } else {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), REQUEST_READ_STORAGE_PERMISSION)
+            } else {
+                // Oprávnění pro čtení z úložiště bylo uděleno
+            }
         }
     }
 

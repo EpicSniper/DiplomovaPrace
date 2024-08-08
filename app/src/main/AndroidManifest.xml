@@ -11,6 +11,8 @@
         android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission android:name="android.permission.WRITE_MEDIA_AUDIO" />
 
     <uses-feature
         android:name="android.software.midi"
