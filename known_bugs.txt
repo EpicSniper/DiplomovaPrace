@@ -1,0 +1,3 @@
+- blbnou opravneni na API 33 a vys
+- nelze ueditovat delku noty
+- pri prvnim zapnuti se nenastavi algoritus, podle ktereho se zjistuje vyska noty
