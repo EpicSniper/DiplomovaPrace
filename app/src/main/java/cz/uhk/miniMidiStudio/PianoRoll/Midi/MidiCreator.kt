@@ -49,7 +49,7 @@ class MidiCreator() {
 
 
         val pomTrackArray = ArrayList<Byte>()
-        pomTrackArray.addAll(createTrackNameEvent("Inst"))
+        pomTrackArray.addAll(createTrackNameEvent(track.getName()))
         correctedNoteEvents.forEach {
             pomTrackArray.addAll(noteTimeEventToByte(it.time))
             if (it.noteOn) {
@@ -106,9 +106,9 @@ class MidiCreator() {
     }
 
     public fun shareMidiFile(context: Context) {
-        val file = File(context.cacheDir, "4ef42fbd166a4b3f913779e5cfbeb6e7.mid")
+        val file = File(context.cacheDir, "${project.getUuid()}.mid")
         val contentUri = FileProvider.getUriForFile(context, "cz.uhk.miniMidiStudio.fileprovider", file)
-        //val path = FileProvider.getUriForFile(context, "cz.uhk.miniMidiStudio.fileprovider", createMidiData(context))
+        val path = FileProvider.getUriForFile(context, "cz.uhk.miniMidiStudio.fileprovider", createMidiData(context))
 
         val shareIntent = Intent()
         shareIntent.action = Intent.ACTION_SEND
@@ -147,7 +147,7 @@ class MidiCreator() {
             chunkInicializationArray.add(it)
         }
 
-        val byteInfoTrackLength = byteArrayFromNumber(6, true, true)
+        val byteInfoTrackLength = byteArrayFromNumber(project.getTracks().size, true, true)
         val headerSection = createHeaderEvent(numberOfTracks)
         var wholeArray = ArrayList<Byte>()
         wholeArray.addAll(chunkInicializationArray)

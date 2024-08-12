@@ -17,7 +17,6 @@ import android.view.*
 import android.view.GestureDetector.OnGestureListener
 import androidx.core.content.ContextCompat
 import cz.uhk.miniMidiStudio.PianoRoll.Midi.MidiCreator
-import cz.uhk.miniMidiStudio.PianoRoll.Midi.MidiFactory
 import cz.uhk.miniMidiStudio.PianoRoll.Midi.MidiPlayer
 import cz.uhk.miniMidiStudio.Project.Project
 import cz.uhk.miniMidiStudio.Project.Track
@@ -307,13 +306,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         }
 
         setHertzToNotes(a4Height)
-        onCreateTestFunction()
         canvas.restore()
         unlockCanvas(canvas)
-    }
-
-    private fun onCreateTestFunction() {
-
     }
 
     public fun changeEditingMode() {
@@ -795,30 +789,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         return pianoKeys.indexOfFirst {
             it.top < height && it.bottom > height
         }
-    }
-
-    private fun pitchToNameConverter(pitch: Int): String {
-        var noteName = ""
-
-        when (pitch % 12) {
-            0 -> noteName += "c"
-            1 -> noteName += "cis"
-            2 -> noteName += "d"
-            3 -> noteName += "dis"
-            4 -> noteName += "e"
-            5 -> noteName += "f"
-            6 -> noteName += "fis"
-            7 -> noteName += "g"
-            8 -> noteName += "gis"
-            9 -> noteName += "a"
-            10 -> noteName += "ais"
-            11 -> noteName += "b"
-        }
-
-        var scaleNumber = (pitch / 12) - 2
-        var scaleStringNumber = scaleNumber.toString().replace("-", "m")
-        noteName += scaleStringNumber
-        return noteName
     }
 
     private fun drawNotes(canvas: Canvas) {
