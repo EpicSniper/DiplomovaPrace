@@ -76,6 +76,7 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
         stopButton.alpha = 0.3f
         deleteEditedButton.alpha = 0.3f
         cancelEditButton.alpha = 0.3f
+        createButton.setImageResource(R.drawable.plus)
         createButton.alpha = 0.3f
         nextTrackButton.alpha = 0.3f
         previousTrackButton.alpha = 0.3f
@@ -148,6 +149,7 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
 
         createButton.setOnClickListener {
             if (activeTrackIndex == -1) {
+                createButton.setImageResource(R.drawable.plus)
                 createButton.alpha = 0.3f
             } else {
                 if (pianoRollView.isCreating) {
@@ -238,10 +240,15 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
             cancelEditButton.alpha = 0.3f
         }
 
-        if (pianoRollView.isCreating || activeTrackIndex == -1) {
+        if (pianoRollView.isCreating) {
+            createButton.alpha = 1f
+            createButton.setImageResource(R.drawable.plusred)
+        } else if (activeTrackIndex == -1) {
             createButton.alpha = 0.3f
+            createButton.setImageResource(R.drawable.plus)
         } else {
             createButton.alpha = 1f
+            createButton.setImageResource(R.drawable.plus)
         }
     }
 
@@ -255,9 +262,9 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
 
     private fun updateRecordingButtons() {
         if (pianoRollView.isPlayingRecordings()) {
-            changePlayingSoundButton.setImageResource(R.drawable.select_all)
+            changePlayingSoundButton.setImageResource(R.drawable.voice)
         } else {
-            changePlayingSoundButton.setImageResource(R.drawable.noselection)
+            changePlayingSoundButton.setImageResource(R.drawable.midi)
         }
     }
 
@@ -288,12 +295,14 @@ class PianoRollFragment : Fragment(), ProjectSettingsFragment.ProjectSettingsDia
     }
 
     private fun startCreatingNotes() {
-        createButton.alpha = 0.3f
+        createButton.alpha = 1f
+        createButton.setImageResource(R.drawable.plusred)
         pianoRollView.startCreatingNotes()
     }
 
     private fun stopCreatingNotes() {
         createButton.alpha = 1f
+        createButton.setImageResource(R.drawable.plus)
         pianoRollView.stopCreatingNotes()
     }
 
