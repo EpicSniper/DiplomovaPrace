@@ -1,6 +1,5 @@
 package cz.uhk.miniMidiStudio.Project
 
-import cz.uhk.miniMidiStudio.PianoRoll.Note
 import kotlinx.serialization.Serializable
 
 @Serializable

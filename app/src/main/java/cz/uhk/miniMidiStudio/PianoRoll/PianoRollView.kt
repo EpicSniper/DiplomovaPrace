@@ -2,9 +2,7 @@ package cz.uhk.miniMidiStudio.PianoRoll
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.pm.PackageManager
 import android.graphics.Canvas
-import android.graphics.Canvas.VertexMode
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
@@ -16,15 +14,14 @@ import android.util.AttributeSet
 import android.view.*
 import android.view.GestureDetector.OnGestureListener
 import androidx.core.content.ContextCompat
-import cz.uhk.miniMidiStudio.PianoRoll.Midi.MidiCreator
 import cz.uhk.miniMidiStudio.PianoRoll.Midi.MidiPlayer
+import cz.uhk.miniMidiStudio.Project.Note
 import cz.uhk.miniMidiStudio.Project.Project
 import cz.uhk.miniMidiStudio.Project.Track
 import cz.uhk.miniMidiStudio.R
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.math.*
 import kotlin.math.pow
 import cz.uhk.miniMidiStudio.Project.ProjectManager
 import cz.uhk.miniMidiStudio.Settings.ProjectSettingsData
@@ -280,8 +277,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         // rendering
         drawGrid(canvas)
         rescaleRectsOfNotes(activeTrack.getNotes())
-        drawNotes(canvas)
-        drawTimelineAndPiano(canvas)
+        drawTimelineAndPianoAndNotes(canvas)
 
         // playing
         if (isPlaying) {
@@ -527,7 +523,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         lastFrameTime = System.currentTimeMillis()
     }
 
-    private fun drawTimelineAndPiano(canvas: Canvas) {
+    private fun drawTimelineAndPianoAndNotes(canvas: Canvas) {
         // draw timeline
         paint.color = ContextCompat.getColor(context, R.color.pianorollframe)
         val left = scrollX + widthDifference / 2f
@@ -555,6 +551,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         val sixteenthInBar = (barLength / beatLength * 4f).toInt()
         var converter = 0
         val modifier = if (sixteenthInBar < 16) sixteenthInBar else 16
+        var linePositions = ArrayList<Float>()
         do {
             var renderLines = true
 
@@ -648,6 +645,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
         } while (actualTime < scrollX + width - (widthDifference / 2f))
 
+        drawNotes(canvas)
 
         // draw playLine
         drawPlayline(canvas)

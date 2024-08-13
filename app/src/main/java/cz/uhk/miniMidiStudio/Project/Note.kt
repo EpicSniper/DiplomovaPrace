@@ -1,4 +1,4 @@
-package cz.uhk.miniMidiStudio.PianoRoll
+package cz.uhk.miniMidiStudio.Project
 
 import android.graphics.RectF
 import kotlinx.serialization.Serializable

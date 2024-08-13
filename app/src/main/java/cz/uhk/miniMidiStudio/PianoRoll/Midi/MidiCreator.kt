@@ -2,10 +2,8 @@ package cz.uhk.miniMidiStudio.PianoRoll.Midi
 
 import android.content.Context
 import android.content.Intent
-import android.os.storage.StorageManager
 import androidx.core.content.ContextCompat.startActivity
 import androidx.core.content.FileProvider
-import cz.uhk.miniMidiStudio.PianoRoll.Note
 import cz.uhk.miniMidiStudio.Project.Project
 import cz.uhk.miniMidiStudio.Project.Track
 import java.io.File
