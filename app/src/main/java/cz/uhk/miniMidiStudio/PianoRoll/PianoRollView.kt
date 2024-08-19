@@ -277,6 +277,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         // rendering
         drawGrid(canvas)
         rescaleRectsOfNotes(activeTrack.getNotes())
+        drawNotes(canvas)
         drawTimelineAndPianoAndNotes(canvas)
 
         // playing
