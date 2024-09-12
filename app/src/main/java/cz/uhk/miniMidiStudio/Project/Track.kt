@@ -7,8 +7,18 @@ class Track(
     private var notes: ArrayList<Note> = ArrayList(),
     private var name: String = "New track",
     private var audioFile: String? = null,
-    private var getRecordingsStart: Int? = null
+    private var getRecordingsStart: Int? = null,
+    private var recordedAudio: ByteArray? = null
 ) {
+    fun getRecordedAudio(): ByteArray? {
+        return recordedAudio
+    }
+
+    fun setRecordedAudio(recordedAudio: ByteArray) {
+        this.recordedAudio = recordedAudio
+    }
+
+
     fun getRecordingsStart(): Int? {
         if (getRecordingsStart == null) {
             getRecordingsStart = Int.MAX_VALUE

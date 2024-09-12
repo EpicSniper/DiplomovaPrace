@@ -6,6 +6,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
+import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
@@ -27,12 +28,16 @@ import cz.uhk.miniMidiStudio.Project.ProjectManager
 import cz.uhk.miniMidiStudio.Settings.ProjectSettingsData
 import kotlinx.coroutines.DelicateCoroutinesApi
 import java.io.File
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.util.UUID
 
 class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(context, attrs),
     SurfaceHolder.Callback, OnGestureListener, ScaleGestureDetector.OnScaleGestureListener {
 
     private lateinit var fragment: PianoRollFragment
+
+    private lateinit var recordedAudio: ByteArray
 
     private var pitchDetectionMethod = PitchDetectionMethod.AUTOCORRELATION
     private var paint = Paint()
@@ -87,7 +92,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private var currentTime = System.currentTimeMillis()
     private var midiPlayer = MidiPlayer()
     private var playRecordings = false
-    private var recordMediaPlayers = ArrayList<RecordMediaPlayer>()
+    private var audioPlayers = ArrayList<AudioPlayer>()
 
     public var isRecording = false
     private var recordingLineTime = ArrayList<Float>()
@@ -101,6 +106,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private var creatingNotePitch = 0
     private var creatingNoteDuration = 0f
     private var creatingNote = false
+
+    private lateinit var audioRecord: AudioRecord
 
     init {
         paint.color = Color.YELLOW
@@ -125,20 +132,19 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         }
     }
 
-    private inner class RecordThread(
-        private var mediaRecorder: MediaRecorder
-    ) : Thread() {
+    private inner class RecordThread() : Thread() {
         private var audioSource = MediaRecorder.AudioSource.MIC
         private var sampleRate = 44100
         private var channelConfig = AudioFormat.CHANNEL_IN_MONO
         private var audioFormat = AudioFormat.ENCODING_PCM_16BIT
         private var bufferSize =
             AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
+        private lateinit var audioDataList: MutableList<Byte>
 
         @SuppressLint("MissingPermission")
         private var audioRecord =
             AudioRecord(audioSource, sampleRate, channelConfig, audioFormat, bufferSize)
-        private var audioData = ShortArray(bufferSize)
+        private lateinit var audioData: ShortArray
 
         @SuppressLint("RestrictedApi", "MissingPermission")
         override fun start() {
@@ -157,12 +163,21 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         }
 
         override fun run() {
-            val buffer = ShortArray(bufferSize)
+            val buffer = ByteArray(bufferSize)
+            audioDataList = mutableListOf<Byte>()
             while (isRecording) {
                 val samplesRead = audioRecord.read(buffer, 0, bufferSize)
+                println(samplesRead)
+                if (samplesRead > 0) {
+                    audioDataList.addAll(buffer.take(samplesRead))
+                }
 
+                val shortBuffer = ShortArray(samplesRead / 2)
+                ByteBuffer.wrap(buffer, 0, samplesRead).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shortBuffer)
+
+                // Předání shortBuffer do getPitch
                 recordingLineTime.add(lineOnTime)
-                recordingLineAutocorrelation.add(getPitch(buffer, sampleRate))
+                recordingLineAutocorrelation.add(getPitch(shortBuffer, sampleRate))
                 invalidate()
             }
         }
@@ -171,8 +186,8 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             isRecording = false
             audioRecord.stop()
             audioRecord.release()
-            mediaRecorder.stop()
-            mediaRecorder.release()
+
+            recordedAudio = audioDataList.toByteArray()
 
             convertRecordingToNotes()
             invalidate()
@@ -254,6 +269,13 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         val canvas = lockCanvas()
         canvas.save()
 
+        project.getTracks().forEach {
+            /*println("------------------")
+            println("Name: " + it.getName())
+            println("Audio file start: " + it.getStart())
+            println("Note start: " + it.getNotes().first().start)*/
+        }
+
         updateButtonsInFragment()
 
         checkBorders()                                      // two times checkBorders, because of clipping out
@@ -291,10 +313,10 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
                 // zapnout zvuk, kdyz je cas startu mensi nez cas kde jsem
                 project.getTracks().forEachIndexed {index, it ->
                     val recordingStart = it.getRecordingsStart()!!
-                    if (!recordMediaPlayers[index].hasPlayingStarted() && recordingStart <= lineOnTime) {
+                    if (!audioPlayers[index].hasPlayingStarted() && recordingStart <= lineOnTime) {
                         val delay = lineOnTime - recordingStart
                         val delayInMs = ((delay * 1000 / beatLength).toInt() / tempo) * 60
-                        recordMediaPlayers[index].startPlaying(context, delayInMs)
+                        audioPlayers[index].startPlaying(delayInMs)
                     }
                 }
             } else {
@@ -493,6 +515,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         newTrack.addNotes(newNotes)
         newTrack.setAudioFile(recordedTrackUuid)
         newTrack.setRecordingsStart(recordingStart)
+        newTrack.setRecordedAudio(recordedAudio)
 
         // add new track to project and set it as active track
         project.addTrack(newTrack)
@@ -645,8 +668,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             sixteenthLengths++
 
         } while (actualTime < scrollX + width - (widthDifference / 2f))
-
-        drawNotes(canvas)
 
         // draw playLine
         drawPlayline(canvas)
@@ -1106,51 +1127,65 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             drawThread?.start()
             resetTime()
             if (playRecordings) {
-                initRecordMediaPlayers()
+                initAudioPlayers()
             } else {
                 midiPlayer.onMidiStart()
             }
         }
     }
 
-    private fun initRecordMediaPlayers() {
-        recordMediaPlayers.clear()
+    private fun initAudioPlayers() {
+        audioPlayers.clear()
         project.getTracks().forEach {
-            recordMediaPlayers.add(RecordMediaPlayer(it))
+            audioPlayers.add(AudioPlayer(it))
         }
     }
 
+    @SuppressLint("MissingPermission")
     fun pushRecordButton() {
         if (!isRecording && !isPlaying) {
             isRecording = true
             recordedTrackUuid = UUID.randomUUID().toString().replace("-", "")
-            val outputFileName = "$recordedTrackUuid.mp3"
-            val file = File(context.filesDir, outputFileName)
 
-            val mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                MediaRecorder(context)
-            } else {
-                MediaRecorder()
-            }
-            mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
-            mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-            mediaRecorder.setOutputFile(file.absolutePath)
-            mediaRecorder.prepare()
-            mediaRecorder.start()
-
-            recordThread = RecordThread(mediaRecorder)
+            recordThread = RecordThread()
             recordThread?.start()
+
             isPlaying = true
             drawThread = DrawThread()
             drawThread?.start()
             resetTime()
             if (playRecordings) {
-                initRecordMediaPlayers()
+                initAudioPlayers()
             } else {
                 midiPlayer.onMidiStart()
             }
         }
+    }
+
+    fun startRecording() : ByteArray {
+        val sampleRate = 44100
+        val channelConfig = AudioFormat.CHANNEL_IN_MONO
+        val audioFormat = AudioFormat.ENCODING_PCM_16BIT
+        val bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
+        val audioDataList = mutableListOf<Byte>()
+        val buffer = ByteArray(bufferSize)
+
+        isRecording = true
+        audioRecord.startRecording()
+
+        val recordingThread = Thread {
+            while (isRecording) {
+                val readBytes = audioRecord.read(buffer, 0, buffer.size)
+                if (readBytes > 0) {
+                    audioDataList.addAll(buffer.take(readBytes))
+                }
+            }
+            audioRecord.stop()
+        }
+        recordingThread.start()
+        recordingThread.join()
+
+        return audioDataList.toByteArray()
     }
 
     fun pushStopButton() {
@@ -1160,7 +1195,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             drawThread = null
             playingNotes.clear()
             midiPlayer.stopAllNotes()
-            recordMediaPlayers.forEach {
+            audioPlayers.forEach {
                 it.stopPlaying()
             }
         }
@@ -1626,7 +1661,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
 
     public fun canDeleteActiveTrack(): Boolean {
         val return1 = project.getTracks().size > 0
-        println(project.getTracks().size)
         return return1
     }
 
