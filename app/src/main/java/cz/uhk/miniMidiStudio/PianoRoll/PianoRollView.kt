@@ -9,7 +9,6 @@ import android.graphics.RectF
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioRecord
-import android.media.AudioTrack
 import android.media.MediaRecorder
 import android.os.Build
 import android.util.AttributeSet
@@ -29,6 +28,8 @@ import cz.uhk.miniMidiStudio.Project.ProjectManager
 import cz.uhk.miniMidiStudio.Settings.ProjectSettingsData
 import kotlinx.coroutines.DelicateCoroutinesApi
 import java.io.File
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.util.UUID
 
 class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(context, attrs),
@@ -107,7 +108,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
     private var creatingNote = false
 
     private lateinit var audioRecord: AudioRecord
-    private lateinit var audioTrack: AudioTrack
 
     init {
         paint.color = Color.YELLOW
@@ -132,9 +132,7 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         }
     }
 
-    private inner class RecordThread(
-        private var mediaRecorder: MediaRecorder
-    ) : Thread() {
+    private inner class RecordThread() : Thread() {
         private var audioSource = MediaRecorder.AudioSource.MIC
         private var sampleRate = 44100
         private var channelConfig = AudioFormat.CHANNEL_IN_MONO
@@ -169,11 +167,17 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             audioDataList = mutableListOf<Byte>()
             while (isRecording) {
                 val samplesRead = audioRecord.read(buffer, 0, bufferSize)
+                println(samplesRead)
                 if (samplesRead > 0) {
                     audioDataList.addAll(buffer.take(samplesRead))
                 }
+
+                val shortBuffer = ShortArray(samplesRead / 2)
+                ByteBuffer.wrap(buffer, 0, samplesRead).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shortBuffer)
+
+                // Předání shortBuffer do getPitch
                 recordingLineTime.add(lineOnTime)
-                recordingLineAutocorrelation.add(getPitch(ShortArray(bufferSize), sampleRate))
+                recordingLineAutocorrelation.add(getPitch(shortBuffer, sampleRate))
                 invalidate()
             }
         }
@@ -182,10 +186,9 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
             isRecording = false
             audioRecord.stop()
             audioRecord.release()
-            mediaRecorder.stop()
-            mediaRecorder.release()
 
             recordedAudio = audioDataList.toByteArray()
+
             convertRecordingToNotes()
             invalidate()
         }
@@ -1143,53 +1146,9 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         if (!isRecording && !isPlaying) {
             isRecording = true
             recordedTrackUuid = UUID.randomUUID().toString().replace("-", "")
-            val outputFileName = "$recordedTrackUuid.mp3"
-            val file = File(context.filesDir, outputFileName)
 
-            val mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                MediaRecorder(context)
-            } else {
-                MediaRecorder()
-            }
-            mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
-            mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-            mediaRecorder.setOutputFile(file.absolutePath)
-            mediaRecorder.prepare()
-            mediaRecorder.start()
-
-            recordThread = RecordThread(mediaRecorder)
+            recordThread = RecordThread()
             recordThread?.start()
-
-
-
-
-
-            val sampleRate = 44100
-            val channelConfig = AudioFormat.CHANNEL_IN_MONO
-            val audioFormat = AudioFormat.ENCODING_PCM_16BIT
-            val bufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
-
-            audioRecord =
-                AudioRecord(MediaRecorder.AudioSource.MIC, sampleRate, channelConfig, audioFormat, bufferSize)
-            audioTrack = AudioTrack.Builder()
-                .setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                        .build()
-                )
-                .setAudioFormat(
-                    AudioFormat.Builder()
-                        .setEncoding(audioFormat)
-                        .setSampleRate(sampleRate)
-                        .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-                        .build()
-                )
-                .setBufferSizeInBytes(bufferSize)
-                .setTransferMode(AudioTrack.MODE_STREAM)
-                .build()
-
 
             isPlaying = true
             drawThread = DrawThread()
@@ -1227,19 +1186,6 @@ class PianoRollView(context: Context, attrs: AttributeSet?) : SurfaceView(contex
         recordingThread.join()
 
         return audioDataList.toByteArray()
-    }
-
-
-    fun playAudio(audioData: ByteArray) {
-        audioTrack.play()
-
-        val playThread = Thread {
-            audioTrack.write(audioData, 0, audioData.size)
-            audioTrack.stop()
-            audioTrack.release()
-        }
-
-        playThread.start()
     }
 
     fun pushStopButton() {
